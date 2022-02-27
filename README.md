@@ -64,7 +64,7 @@ curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opene
 ## Usage
 
 ```text
-usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] query
+usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] [-cl CLIP_LENGTH] query
 
 a python script to share songs from Spotify/YouTube as a 15 second clip
 
@@ -77,6 +77,8 @@ options:
   -o OUT, --out OUT     output file path, overrides directory arg
   -sda SDARGS, --sdargs SDARGS
                         args to pass to spotdl
+  -cl CLIP_LENGTH, --clip-length CLIP_LENGTH
+                        length of output clip in seconds (default 15)
 ```
 
 As pymtheg is built around [spotDL](https://github.com/spotDL/spotify-downloader), you

@@ -38,17 +38,16 @@ from pathlib import Path
 import subprocess
 
 
-CMD_SPOTDL_DOWNLOAD = "spotdl {query} {sdargs} -of mp3"
-
-
 class Behaviour(NamedTuple):
     """
     typed command line argument tuple
     """
+
     query: str
     dir: Optional[Path]
     out: Optional[Path]
     sdargs: Optional[str]
+    clip_length: int
 
 
 def main() -> None:
@@ -59,7 +58,7 @@ def main() -> None:
 
     # make tempdir
     with TemporaryDirectory() as _tmpdir:
-        print(f"pymtheg: debug: {_tmpdir}")
+        # print(f"pymtheg: debug: {_tmpdir}")
         tmpdir = Path(_tmpdir)
 
         # download songs
@@ -84,10 +83,14 @@ def main() -> None:
                 else:
                     # construct paths
                     song_path = song_path.absolute()
-                    song_clip_path = tmpdir.joinpath(f"{song_path.stem}_cover.mp3").absolute()
-                    song_cover_path = tmpdir.joinpath(f"{song_path.stem}_clip.mp3").absolute()
+                    song_clip_path = tmpdir.joinpath(
+                        f"{song_path.stem}_clip.mp3"
+                    ).absolute()
+                    song_cover_path = tmpdir.joinpath(
+                        f"{song_path.stem}_cover.png"
+                    ).absolute()
                     out_path: Path = Path(f"{song_path.stem}.mp4")
-                    
+
                     if bev.out is not None:
                         out_path = bev.out
                     elif bev.dir is not None:
@@ -100,10 +103,10 @@ def main() -> None:
                             "-ss",
                             str(timestamp),
                             "-t",
-                            "15",
+                            str(bev.clip_length),
                             "-i",
                             song_path,
-                            song_clip_path
+                            song_clip_path,
                         ],
                         cwd=tmpdir,
                         errcode=3,
@@ -116,8 +119,6 @@ def main() -> None:
                             "-i",
                             song_path,
                             "-an",
-                            "-vcodec",
-                            "copy",
                             song_cover_path,
                         ],
                         cwd=tmpdir,
@@ -134,7 +135,6 @@ def main() -> None:
                             song_clip_path,
                             out_path,
                         ],
-                        cwd=tmpdir,
                         errcode=3,
                     )
 
@@ -146,7 +146,7 @@ def main() -> None:
 def part_of_day():
     """
     used to greet user goodbye
-    
+
     call it bloat or whatever, i like it
     """
     hh = datetime.now().hour
@@ -220,7 +220,9 @@ def invocate(
                 invocation.append(arg)
 
     try:
-        print(f"pymtheg: info: invocating command '{' '.join([str(p) for p in invocation])}'")
+        print(
+            f"\npymtheg: info: invocating command '{' '.join([str(p) for p in invocation])}'"
+        )
         return subprocess.run(invocation, cwd=cwd, universal_newlines=True, check=True)
 
     except FileNotFoundError as err:
@@ -270,9 +272,23 @@ def get_args() -> Behaviour:
         default=None,
     )
     parser.add_argument("-sda", "--sdargs", help="args to pass to spotdl", default=None)
+    parser.add_argument(
+        "-cl",
+        "--clip-length",
+        help="length of output clip in seconds (default 15)",
+        dest="clip_length",
+        type=int,
+        default=15,
+    )
 
     args = parser.parse_args()
-    bev = Behaviour(query=args.query, dir=args.dir, out=args.out, sdargs=args.sdargs)
+    bev = Behaviour(
+        query=args.query,
+        dir=args.dir,
+        out=args.out,
+        sdargs=args.sdargs,
+        clip_length=args.clip_length,
+    )
 
     # validate
     if bev.out is not None and bev.out.exists():
