@@ -28,13 +28,7 @@ You can then either use pip to install the dependencies from requirements.txt, o
 
 ### Additional Setup for Termux
 
-This assumes you have no `$HOME/bin/termux-url-opener` script. If you do, you may have to
-tailer the following instructions to work with your current setup.
-
-This also assumes that you already have a folder named `pymtheg` in the `Movies` folder
-of your internal storage, and that you have already ran `termux-setup-storage` to allow
-access of your internal storage from within Termux. If not, simply adjust the script
-shown below accordingly.
+Write the following into `$HOME/bin/termux-url-opener`.
 
 ```text
 #!/bin/bash
@@ -48,14 +42,24 @@ Alternatively, you can run the following command to obtain the script:
 curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opener -o $HOME/bin/termux-url-opener
 ```
 
-If you did not install pymtheg through pip, change `pymtheg` to the path leading to
-`pymtheg.py`, such as `~/scripts/pymtheg.py`.
+**Notes:**
 
-If you have a copy of the repo and use Poetry, change `pymtheg` to `poetry run pymtheg`.
-However do add a line before the pymtheg invocation to change directories to the
-repository root or else the `poetry run` invocation will fail.
+- This assumes you have no `$HOME/bin/termux-url-opener` script. If you do, you may have
+ to tailer the following instructions to work with your current setup.
 
-Dont forget to `chmod +x` the script after writing.
+- This also assumes that you already have a folder named `pymtheg` in the `Movies`
+  folder of your internal storage, and that you have already ran `termux-setup-storage`
+  to allow access of your internal storage from within Termux. If not, simply adjust the
+  script shown above accordingly.
+
+- If you did not install pymtheg through pip, change `pymtheg` to the path leading to
+  `pymtheg.py`, such as `~/scripts/pymtheg.py`.
+
+- If you have a copy of the repo and use Poetry, change `pymtheg` to
+  `poetry run pymtheg`. However do add a line before the pymtheg invocation to change
+  directories to the repository root or else the `poetry run` invocation will fail.
+
+- Dont forget to `chmod +x` the script after writing!
 
 ## Usage
 
