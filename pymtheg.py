@@ -30,9 +30,10 @@ For more information, please refer to <http://unlicense.org/>
 
 from typing import Iterable, List, NamedTuple, Optional
 
-from argparse import ArgumentParser, Namespace
 from tempfile import TemporaryDirectory
+from argparse import ArgumentParser
 from traceback import print_tb
+from datetime import datetime
 from pathlib import Path
 import subprocess
 
@@ -50,12 +51,104 @@ class Behaviour(NamedTuple):
 def main() -> None:
     bev = get_args()
 
+    # make tempdir
     with TemporaryDirectory() as _tmpdir:
         tmpdir = Path(_tmpdir)
-        invocate(name="spotdl", args=[bev.query, bev.sdargs], cwd=tmpdir, errcode=2)
 
-        for song in tmpdir.rglob("*.mp3"):
-            print(song)
+        # download songs
+        invocate(
+            name="spotdl", args=[f'"{bev.query}"', bev.sdargs], cwd=tmpdir, errcode=2
+        )
+
+        # process songs
+        print("\npymtheg: info: enter the timestamp of clip start ([hh:mm:]ss)")
+        for song_path in tmpdir.rglob("*.mp3"):
+            while True:
+                # get song start timestamp for clip
+                response = input(f"  {song_path.stem}: ")
+                timestamp = parse_timestamp(response)
+                if timestamp is None:
+                    # reprompt if invalid
+                    print(
+                        (" " * (len(song_path.stem) + 4)) + ("^" * len(response)),
+                        "invalid timestamp",
+                    )
+
+                else:
+                    # cut audio
+                    invocate(
+                        "ffmpeg",
+                        args=[
+                            f'-ss {timestamp} -to {timestamp + 15} -i "{song_path}" "{song_path}"'
+                        ],
+                        cwd=tmpdir,
+                        errcode=3,
+                    )
+
+                    # get album art
+                    invocate(
+                        "ffmpeg",
+                        args=[
+                            f'-i "{song_path}" -an -vcodec copy "{song_path.stem}-cover.png"'
+                        ],
+                        cwd=tmpdir,
+                        errcode=3,
+                    )
+
+                    # make video
+                    out_path: Path = Path(f"{song_path.stem}.mp4")
+                    if bev.out is not None:
+                        out_path = bev.out
+                    elif bev.dir is not None:
+                        out_path = bev.dir.joinpath(f"{song_path.stem}.mp4")
+                    invocate(
+                        "ffmpeg",
+                        args=[
+                            f'ffmpeg -i "{song_path.stem}-cover.png" -i "{song_path}"',
+                            str(out_path),
+                        ],
+                        cwd=tmpdir,
+                        errcode=3,
+                    )
+
+                    break
+
+    print(f"\npymtheg: info: all operations successful. have a great {part_of_day()}.")
+
+
+def part_of_day():
+    # call it bloat or whatever, i like it
+    hh = datetime.now().hour
+    return (
+        "morning ahead"
+        if 5 <= hh <= 11
+        else "afternoon ahead"
+        if 12 <= hh <= 19
+        else "evening ahead"
+        if 18 <= hh <= 22
+        else "night"
+    )
+
+
+def parse_timestamp(ts: str) -> Optional[int]:
+    sts = ts.split(":")  # split time stamp (hh:mm:ss)
+    sts.reverse()  # (ss:mm:hh)
+
+    tu_conv = [1, 60, 3600]  # time unit conversion
+    total_ss = 0  # total seconds
+
+    if len(sts) < 4:
+        for tu, tu_c in zip(sts, tu_conv):
+            if tu.isnumeric():
+                total_ss += int(tu) * tu_c
+
+            else:
+                return None
+
+        return total_ss
+
+    else:
+        return None
 
 
 def invocate(
@@ -72,11 +165,13 @@ def invocate(
 
     try:
         print(f"pymtheg: info: invocating command '{' '.join(invocation)}'")
-        return subprocess.run(
-            invocation,
-            cwd=cwd,
-            universal_newlines=True
-        )
+        proc = subprocess.run(invocation, cwd=cwd, universal_newlines=True)
+        if proc.returncode != 0:
+            raise ChildProcessError(
+                f"program retured non-zero return code ({proc.returncode})"
+            )
+        else:
+            return proc
 
     except FileNotFoundError as err:
         print_tb(err.__traceback__)
