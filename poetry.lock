@@ -370,7 +370,7 @@ websockets = "*"
 
 [[package]]
 name = "ytmusicapi"
-version = "0.20.0"
+version = "0.21.0"
 description = "Unofficial API for YouTube Music"
 category = "main"
 optional = false
@@ -688,8 +688,8 @@ yt-dlp = [
     {file = "yt_dlp-2022.2.4-py2.py3-none-any.whl", hash = "sha256:b0051920e066379acba6e253adba8bc1592e2ad1b7923df3a56793a4774b0cee"},
 ]
 ytmusicapi = [
-    {file = "ytmusicapi-0.20.0-py3-none-any.whl", hash = "sha256:abdb90426baa14a7929ec810d65c1df228661b61d580678fc48c087909a9aea2"},
-    {file = "ytmusicapi-0.20.0.tar.gz", hash = "sha256:0ef2ebcad2e9dbc4d5155764996835f5c0b65517ad15c4b1edd9ac3b81d0a95a"},
+    {file = "ytmusicapi-0.21.0-py3-none-any.whl", hash = "sha256:29d8d44e1911458041882a453b05c37021ff850757c648f93a45d1775dddbae2"},
+    {file = "ytmusicapi-0.21.0.tar.gz", hash = "sha256:26cb481dceb54c54048111ebe783780e8aba30bd04708703193109fed6eb0b60"},
 ]
 zipp = [
     {file = "zipp-3.6.0-py3-none-any.whl", hash = "sha256:9fe5ea21568a0a70e50f273397638d39b03353731e6cbbb3fd8502a33fec40bc"},

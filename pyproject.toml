@@ -1,12 +1,24 @@
 [tool.poetry]
 name = "pymtheg"
-version = "1.0.0"
+version = "1.0.1"
 description = "A Python script to share songs from Spotify/YouTube as a 15 second clip."
 authors = ["Your Name <you@example.com>"]
-license = "Unlicense"
 packages = [
     { include = "pymtheg.py" },
 ]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: Public Domain",
+    "License :: OSI Approved :: The Unlicense (Unlicense)",
+    "Topic :: Utilities",
+    "Natural Language :: English",
+    "Topic :: Multimedia",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Multimedia :: Sound/Audio",
+]
+readme = "README.md"
+repository = "https://github.com/markjoshwel/pymtheg"
+keywords = ["music", "video", "audio", "cli", "utility"]
 
 [tool.black]
 line-length = 90
