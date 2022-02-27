@@ -28,7 +28,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org/>
 """
 
-from typing import Iterable, List, NamedTuple, Optional
+from typing import Iterable, List, NamedTuple, Optional, Union
 
 from tempfile import TemporaryDirectory
 from argparse import ArgumentParser
@@ -42,6 +42,9 @@ CMD_SPOTDL_DOWNLOAD = "spotdl {query} {sdargs} -of mp3"
 
 
 class Behaviour(NamedTuple):
+    """
+    typed command line argument tuple
+    """
     query: str
     dir: Optional[Path]
     out: Optional[Path]
@@ -49,15 +52,19 @@ class Behaviour(NamedTuple):
 
 
 def main() -> None:
+    """
+    pymtheg entry point
+    """
     bev = get_args()
 
     # make tempdir
     with TemporaryDirectory() as _tmpdir:
+        print(f"pymtheg: debug: {_tmpdir}")
         tmpdir = Path(_tmpdir)
 
         # download songs
         invocate(
-            name="spotdl", args=[f'"{bev.query}"', bev.sdargs], cwd=tmpdir, errcode=2
+            name="spotdl", args=[bev.query, bev.sdargs], cwd=tmpdir, errcode=2, split=True
         )
 
         # process songs
@@ -75,11 +82,28 @@ def main() -> None:
                     )
 
                 else:
-                    # cut audio
+                    # construct paths
+                    song_path = song_path.absolute()
+                    song_clip_path = tmpdir.joinpath(f"{song_path.stem}_cover.mp3").absolute()
+                    song_cover_path = tmpdir.joinpath(f"{song_path.stem}_clip.mp3").absolute()
+                    out_path: Path = Path(f"{song_path.stem}.mp4")
+                    
+                    if bev.out is not None:
+                        out_path = bev.out
+                    elif bev.dir is not None:
+                        out_path = bev.dir.joinpath(f"{song_path.stem}.mp4")
+
+                    # clip audio
                     invocate(
                         "ffmpeg",
                         args=[
-                            f'-ss {timestamp} -to {timestamp + 15} -i "{song_path}" "{song_path}"'
+                            "-ss",
+                            str(timestamp),
+                            "-t",
+                            "15",
+                            "-i",
+                            song_path,
+                            song_clip_path
                         ],
                         cwd=tmpdir,
                         errcode=3,
@@ -89,23 +113,26 @@ def main() -> None:
                     invocate(
                         "ffmpeg",
                         args=[
-                            f'-i "{song_path}" -an -vcodec copy "{song_path.stem}-cover.png"'
+                            "-i",
+                            song_path,
+                            "-an",
+                            "-vcodec",
+                            "copy",
+                            song_cover_path,
                         ],
                         cwd=tmpdir,
                         errcode=3,
                     )
 
                     # make video
-                    out_path: Path = Path(f"{song_path.stem}.mp4")
-                    if bev.out is not None:
-                        out_path = bev.out
-                    elif bev.dir is not None:
-                        out_path = bev.dir.joinpath(f"{song_path.stem}.mp4")
                     invocate(
                         "ffmpeg",
                         args=[
-                            f'ffmpeg -i "{song_path.stem}-cover.png" -i "{song_path}"',
-                            str(out_path),
+                            "-i",
+                            song_cover_path,
+                            "-i",
+                            song_clip_path,
+                            out_path,
                         ],
                         cwd=tmpdir,
                         errcode=3,
@@ -117,7 +144,11 @@ def main() -> None:
 
 
 def part_of_day():
-    # call it bloat or whatever, i like it
+    """
+    used to greet user goodbye
+    
+    call it bloat or whatever, i like it
+    """
     hh = datetime.now().hour
     return (
         "morning ahead"
@@ -131,6 +162,12 @@ def part_of_day():
 
 
 def parse_timestamp(ts: str) -> Optional[int]:
+    """
+    parse user-submitted timestamp
+
+    ts: str
+        timestamp following [hh:mm:]ss format (e.g. 2:49, 5:18:18)
+    """
     sts = ts.split(":")  # split time stamp (hh:mm:ss)
     sts.reverse()  # (ss:mm:hh)
 
@@ -153,25 +190,38 @@ def parse_timestamp(ts: str) -> Optional[int]:
 
 def invocate(
     name: str,
-    args: Iterable[Optional[str]] = [],
+    args: Iterable[Optional[Union[str, Path]]] = [],
     cwd: Optional[Path] = None,
     errcode: int = -1,
+    split: bool = False,
 ) -> subprocess.CompletedProcess:
-    invocation: List[str] = [name]
+    """
+    invocates command using subprocess.run
+
+    name: str,
+        name of program
+    args: Iterable[Optional[Union[str, Path]]] = [],
+        args of program, e.g. ["download", "-o=$HOME"]
+    wd: Optional[Path] = None,
+        working directory for process to be run
+    errcode: int = -1,
+        exit code for if the process returns non-zero
+    split: bool = False,
+        split arguments (only used for bev.sdargs)
+    """
+
+    invocation: List[Union[str, Path]] = [name]
 
     for arg in args:
         if arg is not None:
-            invocation += arg.split()
+            if split and isinstance(arg, str):
+                invocation += arg.split()
+            else:
+                invocation.append(arg)
 
     try:
-        print(f"pymtheg: info: invocating command '{' '.join(invocation)}'")
-        proc = subprocess.run(invocation, cwd=cwd, universal_newlines=True)
-        if proc.returncode != 0:
-            raise ChildProcessError(
-                f"program retured non-zero return code ({proc.returncode})"
-            )
-        else:
-            return proc
+        print(f"pymtheg: info: invocating command '{' '.join([str(p) for p in invocation])}'")
+        return subprocess.run(invocation, cwd=cwd, universal_newlines=True, check=True)
 
     except FileNotFoundError as err:
         print_tb(err.__traceback__)
@@ -199,6 +249,9 @@ def invocate(
 
 
 def get_args() -> Behaviour:
+    """
+    parse and validate arguments
+    """
     # parse
     parser = ArgumentParser(
         prog="pymtheg",
