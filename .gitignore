@@ -20,3 +20,8 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# spotDL
+.spotdl*
+*.spotdl*
+*.mp3

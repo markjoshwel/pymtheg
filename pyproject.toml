@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "pymtheg"
+version = "1.0.0"
+description = "A Python script to share songs from Spotify/YouTube as a 15 second clip."
+authors = ["Your Name <you@example.com>"]
+license = "Unlicense"
+packages = [
+    { include = "pymtheg.py" },
+]
+
+[tool.black]
+line-length = 90
+
+[tool.poetry.scripts]
+pymtheg = 'pymtheg:main'
+
+[tool.poetry.dependencies]
+python = "^3.6.2"
+spotdl = "^3.9.3"
+
+[tool.poetry.dev-dependencies]
+mypy = "^0.931"
+black = "^22.1.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

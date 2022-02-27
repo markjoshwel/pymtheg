@@ -10,6 +10,8 @@ use with Termux.
 
 ## Installation
 
+pymtheg requires Python 3.6.2 or later.
+
 ### From pip
 
 ```text
@@ -40,6 +42,12 @@ shown below accordingly.
 pymtheg $1 -d ~/storage/movies/pymtheg/
 ```
 
+Alternatively, you can run the following command to obtain the script:
+
+```text
+curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opener -o $HOME/bin/termux-url-opener
+```
+
 If you did not install pymtheg through pip, change `pymtheg` to the path leading to
 `pymtheg.py`, such as `~/scripts/pymtheg.py`.
 
@@ -52,27 +60,29 @@ Dont forget to `chmod +x` the script after writing.
 ## Usage
 
 ```text
-usage: pymtheg [-h] [-d DIR] [-o OUT] link
+usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] query
 
 a python script to share songs from Spotify/YouTube as a 15 second clip
 
 positional arguments:
-  link               spotify or youtube link
+  query                 song/link from spotify/youtube
 
-optional arguments:
-  -h, --help         show this help message and exit
-  -d DIR, --dir DIR  directory to output to
-  -o OUT, --out OUT  output file path, overrides directory arg
+options:
+  -h, --help            show this help message and exit
+  -d DIR, --dir DIR     directory to output to
+  -o OUT, --out OUT     output file path, overrides directory arg
+  -sda SDARGS, --sdargs SDARGS
+                        args to pass to spotdl
 ```
+
+As pymtheg is built around [spotDL](https://github.com/spotDL/spotify-downloader), you
+can pass spotDL args to pymtheg. See their documentation for more information!
 
 ### Return Codes
 
 - `0`: Successfull
-
-- `1`: Invalid link
-
+- `1`: Invalid args
 - `2`: Error during song retrieval
-
 - `3`: Error during video creation
 
 ## Contributing

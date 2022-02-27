@@ -4,7 +4,7 @@ FROM gitpod/workspace-base
 LABEL dazzle/layer=lang-python
 LABEL dazzle/test=tests/lang-python.yaml
 USER gitpod
-RUN sudo install-packages python3-pip
+RUN sudo install-packages python3-pip ffmpeg
 
 ENV PATH=$HOME/.pyenv/bin:$HOME/.pyenv/shims:$PATH
 RUN curl -fsSL https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash \
