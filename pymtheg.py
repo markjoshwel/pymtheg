@@ -52,11 +52,10 @@ def main() -> None:
 
     with TemporaryDirectory() as _tmpdir:
         tmpdir = Path(_tmpdir)
-        invocate(name="spotdl", args=[bev.sdargs, bev.query], cwd=tmpdir, errcode=2)
+        invocate(name="spotdl", args=[bev.query, bev.sdargs], cwd=tmpdir, errcode=2)
 
         for song in tmpdir.rglob("*.mp3"):
-            # TODO
-            ...
+            print(song)
 
 
 def invocate(
@@ -65,14 +64,18 @@ def invocate(
     cwd: Optional[Path] = None,
     errcode: int = -1,
 ) -> subprocess.CompletedProcess:
-    invocation: List[str] = [name] + [arg for arg in args if arg is not None]
+    invocation: List[str] = [name]
+
+    for arg in args:
+        if arg is not None:
+            invocation += arg.split()
 
     try:
         print(f"pymtheg: info: invocating command '{' '.join(invocation)}'")
         return subprocess.run(
             invocation,
             cwd=cwd,
-            shell=True,  # kowai
+            universal_newlines=True
         )
 
     except FileNotFoundError as err:
