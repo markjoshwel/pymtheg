@@ -10,7 +10,7 @@ use with Termux.
 
 ## Installation
 
-pymtheg requires Python 3.6.2 or later.
+pymtheg requires Python 3.6.2 or later, and ffmpeg.
 
 ### From pip
 
@@ -26,7 +26,16 @@ git clone https://github.com/markjoshwel/pymtheg.git
 
 You can then either use pip to install the dependencies from requirements.txt, or use Poetry instead.
 
-### Additional Setup for Termux
+### On Termux
+
+Currently, the latest version of rapidfuzz (dependency of spotDL, a core dependency of
+pymtheg) will fail to build. (https://github.com/maxbachmann/RapidFuzz/issues/195)
+
+The current solution is to install a slightly older version of the package.
+
+```
+pip install rapidfuzz==1.9.1
+```
 
 Write the following into `$HOME/bin/termux-url-opener`.
 
