@@ -79,7 +79,7 @@ curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opene
 Copy the following command into the terminal:
 
 ```text
-curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-setup && chmod +x termux-pymtheg-setup && ./termux-pymtheg-setup
+curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-setup -o termux-pymtheg-setup && sh termux-pymtheg-setup
 ```
 
 ## Usage
