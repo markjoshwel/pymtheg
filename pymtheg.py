@@ -28,6 +28,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org/>
 """
 
+from json import loads
 from typing import Iterable, List, NamedTuple, Optional, Union
 
 from tempfile import TemporaryDirectory
@@ -44,9 +45,10 @@ class Behaviour(NamedTuple):
     """
 
     query: str
-    dir: Optional[Path]
+    dir: Path
     out: Optional[Path]
     sdargs: str
+    ffargs: str
     clip_length: int
 
 
@@ -71,7 +73,17 @@ def main() -> None:
         print("               end timestamp can be relative, prefix with '+'")
         print("               press enter to use given defaults")
 
-        for song_path in tmpdir.rglob("*.mp3"):
+        for song_path in tmpdir.rglob("*.*"):
+
+            # TODO: get song length
+            proc = invocate(
+                "ffprobe",
+                args=["-v", "quiet", "-print_format", "json", "-show_format", song_path],
+            )
+            song_duration: int = int(
+                loads(proc.stdout)["format"]["duration"].split(".")[0]
+            )
+
             print(f"  {song_path.stem}")
 
             # get starting timestamp
@@ -85,13 +97,21 @@ def main() -> None:
                     _start_timestamp = parse_timestamp(response)
 
                     if _start_timestamp is None:
-                        # reprompt if invalid
+                        # invalid format
                         print(
                             (" " * len(_query)) + ("^" * len(response)),
                             "invalid timestamp",
                         )
 
+                    elif _start_timestamp >= song_duration:
+                        # invalid, timestamp >= song duration
+                        print(
+                            (" " * len(_query)) + ("^" * len(response)),
+                            "timestamp exceeds song duration",
+                        )
+
                     else:
+                        # valid, continue
                         start_timestamp = _start_timestamp
                         break
 
@@ -127,12 +147,10 @@ def main() -> None:
             song_path = song_path.absolute()
             song_clip_path = tmpdir.joinpath(f"{song_path.stem}_clip.mp3").absolute()
             song_cover_path = tmpdir.joinpath(f"{song_path.stem}_cover.png").absolute()
-            out_path: Path = Path(f"{song_path.stem}.mp4")
+            out_path: Path = bev.dir.joinpath(f"{song_path.stem}.mp4").absolute()
 
             if bev.out is not None:
                 out_path = bev.out
-            elif bev.dir is not None:
-                out_path = bev.dir.joinpath(f"{song_path.stem}.mp4")
 
             # clip audio
             invocate(
@@ -163,31 +181,16 @@ def main() -> None:
                 errcode=3,
             )
 
-            # make video
+            # create clip
             invocate(
                 "ffmpeg",
-                args=[
-                    "-loop",
-                    "1",
-                    "-i",
-                    song_cover_path,
-                    "-i",
-                    song_clip_path,
-                    "-c:a",
-                    "aac",
-                    "-vcodec",
-                    "libx264",
-                    "-pix_fmt",
-                    "yuv420p",
-                    "-preset",
-                    "ultrafast",
-                    "-tune",
-                    "stillimage",
-                    "-shortest",
-                    out_path,
-                ],
+                args=["-i", song_cover_path, "-i", song_clip_path]
+                + bev.ffargs.split()
+                + [out_path],
                 errcode=3,
             )
+
+            print()
 
     print(f"\npymtheg: info: all operations successful. have a great {part_of_day()}.")
 
@@ -256,7 +259,7 @@ def invocate(
         name of program
     args: Iterable[Optional[Union[str, Path]]] = [],
         args of program, e.g. ["download", "-o=$HOME"]
-    wd: Optional[Path] = None,
+    cwd: Optional[Path] = None,
         working directory for process to be run
     errcode: int = -1,
         exit code for if the process returns non-zero
@@ -269,24 +272,34 @@ def invocate(
             invocation.append(arg)
 
     try:
-        print(
-            f"pymtheg: info: invocating command '{' '.join([str(p) for p in invocation])}'\n"
+        proc = subprocess.run(
+            invocation,
+            cwd=cwd,
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-        return subprocess.run(invocation, cwd=cwd, universal_newlines=True, check=True)
+
+        if proc.returncode != 0:
+            if proc.stdout != "":
+                print(f"pymtheg: info: invocation stdout\n{proc.stdout}")
+
+            if proc.stderr != "":
+                print(f"pymtheg: info: invocation stderr\n{proc.stderr}")
+
+            print(f"invocation:\n  invocation={invocation}\n  cwd={cwd}")
+
+            print(
+                f"\npymtheg: error: error during command invocation ({proc.returncode}),"
+                " see above for details"
+            )
+            exit(proc.returncode)
 
     except FileNotFoundError as err:
         print_tb(err.__traceback__)
         print(
             f"{err.__class__.__name__}: {err}\n\n"
             f"pymtheg: error: could not invocate {name}, see traceback"
-        )
-        exit(errcode)
-
-    except subprocess.CalledProcessError as err:
-        print_tb(err.__traceback__)
-        print(
-            f"{err.__class__.__name__}: {err}\n\n"
-            f"pymtheg: error: error during invocation of {name}, see traceback"
         )
         exit(errcode)
 
@@ -298,6 +311,9 @@ def invocate(
         )
         exit(errcode)
 
+    else:
+        return proc
+
 
 def get_args() -> Behaviour:
     """
@@ -306,12 +322,14 @@ def get_args() -> Behaviour:
     # parse
     parser = ArgumentParser(
         prog="pymtheg",
-        description="a python script to share songs from Spotify/YouTube as a 15 second clip",
+        description=(
+            "a python script to share songs from Spotify/YouTube as a 15 second clip"
+        ),
     )
 
     parser.add_argument("query", help="song/link from spotify/youtube")
     parser.add_argument(
-        "-d", "--dir", type=Path, help="directory to output to", default=None
+        "-d", "--dir", type=Path, help="directory to output to", default=Path.cwd()
     )
     parser.add_argument(
         "-o",
@@ -321,6 +339,15 @@ def get_args() -> Behaviour:
         default=None,
     )
     parser.add_argument("-sda", "--sdargs", help="args to pass to spotdl", default="")
+    parser.add_argument(
+        "-ffa",
+        "--ffargs",
+        help="args to pass to ffmpeg for clip creation",
+        default=(
+            "-loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast "
+            "-tune stillimage -shortest"
+        ),
+    )
     parser.add_argument(
         "-cl",
         "--clip-length",
@@ -336,23 +363,28 @@ def get_args() -> Behaviour:
         dir=args.dir,
         out=args.out,
         sdargs=args.sdargs,
+        ffargs=args.ffargs,
         clip_length=args.clip_length,
     )
 
-    # validate
-    if bev.out is not None and bev.out.exists():
-        override_response = input(f"pymtheg: info: {bev.out} exists, override? (y/n)")
-        if override_response.lower() != "y":
+    # validate:
+    if bev.out is not None:
+        if bev.out.is_dir():
+            print("pymtheg: error: output file is a directory")
             exit(1)
 
-    if bev.dir is not None:
-        if not bev.dir.exists():
-            print("pymtheg: error: output directory is non-existent")
-            exit(1)
+        if bev.out.exists():
+            override_response = input(f"pymtheg: info: {bev.out} exists, override? (y/n)")
+            if override_response.lower() != "y":
+                exit(1)
 
-        if not bev.dir.is_dir():
-            print("pymtheg: error: output directory is not a directory")
-            exit(1)
+    if not bev.dir.exists():
+        print("pymtheg: error: output directory is non-existent")
+        exit(1)
+
+    if not bev.dir.is_dir():
+        print("pymtheg: error: output directory is not a directory")
+        exit(1)
 
     return bev
 

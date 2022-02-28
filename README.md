@@ -8,6 +8,9 @@ use with Termux.
 - [Contributing](#contributing)
 - [License](#license)
 
+For Termux users looking for a quick setup script, see
+[Quick Termux Setup](#quick-termux-setup).
+
 ## Installation
 
 pymtheg requires Python 3.6.2 or later, and ffmpeg.
@@ -71,6 +74,14 @@ curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opene
 
 - Dont forget to `chmod +x` the script after writing!
 
+## Quick Termux Setup
+
+Copy the following command into the terminal:
+
+```text
+curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-setup && chmod +x termux-pymtheg-setup && ./termux-pymtheg-setup
+```
+
 ## Usage
 
 ```text
@@ -87,12 +98,16 @@ options:
   -o OUT, --out OUT     output file path, overrides directory arg
   -sda SDARGS, --sdargs SDARGS
                         args to pass to spotdl
+  -ffa FFARGS, --ffargs FFARGS
+                        args to pass ffmpeg for clip creation
   -cl CLIP_LENGTH, --clip-length CLIP_LENGTH
                         length of output clip in seconds (default 15)
 ```
 
-As pymtheg is built around [spotDL](https://github.com/spotDL/spotify-downloader), you
-can pass spotDL args to pymtheg. See their documentation for more information!
+**Notes:**
+
+- ffargs default:
+  `-loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune stillimage -shortest`
 
 ### Return Codes
 

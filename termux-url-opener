@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pymtheg $1 -d ~/storage/movies/pymtheg/
+pymtheg $1 -d ~/storage/movies/pymtheg/ && termux-media-scan ~/storage/movies/pymtheg/ -r
