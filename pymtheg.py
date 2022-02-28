@@ -46,7 +46,7 @@ class Behaviour(NamedTuple):
     query: str
     dir: Optional[Path]
     out: Optional[Path]
-    sdargs: Optional[str]
+    sdargs: str
     clip_length: int
 
 
@@ -63,93 +63,131 @@ def main() -> None:
 
         # download songs
         invocate(
-            name="spotdl", args=[bev.query, bev.sdargs], cwd=tmpdir, errcode=2, split=True
+            name="spotdl", args=[bev.query] + bev.sdargs.split(), cwd=tmpdir, errcode=2
         )
 
         # process songs
-        print("\npymtheg: info: enter the timestamp of clip start ([hh:mm:]ss)")
+        print("\npymtheg: info: enter timestamps in format [hh:mm:]ss")
+        print("               end timestamp can be relative, prefix with '+'")
+        print("               press enter to use given defaults")
+
         for song_path in tmpdir.rglob("*.mp3"):
+            print(f"  {song_path.stem}")
+
+            # get starting timestamp
+            start_timestamp = 0
+
+            _query = "    clip start: "
             while True:
-                # get song start timestamp for clip
-                response = input(f"  {song_path.stem}: ")
-                timestamp = parse_timestamp(response)
-                if timestamp is None:
-                    # reprompt if invalid
-                    print(
-                        (" " * (len(song_path.stem) + 4)) + ("^" * len(response)),
-                        "invalid timestamp",
-                    )
+                response = input(f"{_query}0\r{_query}")
 
-                else:
-                    # construct paths
-                    song_path = song_path.absolute()
-                    song_clip_path = tmpdir.joinpath(
-                        f"{song_path.stem}_clip.mp3"
-                    ).absolute()
-                    song_cover_path = tmpdir.joinpath(
-                        f"{song_path.stem}_cover.png"
-                    ).absolute()
-                    out_path: Path = Path(f"{song_path.stem}.mp4")
+                if response != "":
+                    _start_timestamp = parse_timestamp(response)
 
-                    if bev.out is not None:
-                        out_path = bev.out
-                    elif bev.dir is not None:
-                        out_path = bev.dir.joinpath(f"{song_path.stem}.mp4")
+                    if _start_timestamp is None:
+                        # reprompt if invalid
+                        print(
+                            (" " * len(_query)) + ("^" * len(response)),
+                            "invalid timestamp",
+                        )
 
-                    # clip audio
-                    invocate(
-                        "ffmpeg",
-                        args=[
-                            "-ss",
-                            str(timestamp),
-                            "-t",
-                            str(bev.clip_length),
-                            "-i",
-                            song_path,
-                            song_clip_path,
-                        ],
-                        cwd=tmpdir,
-                        errcode=3,
-                    )
+                    else:
+                        start_timestamp = _start_timestamp
+                        break
 
-                    # get album art
-                    invocate(
-                        "ffmpeg",
-                        args=[
-                            "-i",
-                            song_path,
-                            "-an",
-                            song_cover_path,
-                        ],
-                        cwd=tmpdir,
-                        errcode=3,
-                    )
-
-                    # make video
-                    invocate(
-                        "ffmpeg",
-                        args=[
-                            "r",
-                            "1",
-                            "-loop",
-                            "1",
-                            "-y",
-                            "-i",
-                            song_cover_path,
-                            "-i",
-                            song_clip_path,
-                            "-c:a copy",
-                            "-r",
-                            "1",
-                            "vcodec",
-                            "libx264",
-                            "-shortest",
-                            out_path,
-                        ],
-                        errcode=3,
-                    )
-
+                elif response == "":
                     break
+
+            # get ending timestamp
+            end_timestamp: int = start_timestamp + bev.clip_length
+
+            _query = "      clip end: "
+            while True:
+                response = input(f"{_query}+{bev.clip_length}\r{_query}")
+                if response != "":
+                    _end_timestamp = parse_timestamp(
+                        response, relative_to=start_timestamp
+                    )
+
+                    if _end_timestamp is None:
+                        # reprompt if invalid
+                        print(
+                            (" " * len(_query)) + ("^" * len(response)),
+                            "invalid timestamp",
+                        )
+
+                    else:
+                        end_timestamp = _end_timestamp
+                        break
+
+                elif response == "":
+                    break
+
+            # construct paths
+            song_path = song_path.absolute()
+            song_clip_path = tmpdir.joinpath(f"{song_path.stem}_clip.mp3").absolute()
+            song_cover_path = tmpdir.joinpath(f"{song_path.stem}_cover.png").absolute()
+            out_path: Path = Path(f"{song_path.stem}.mp4")
+
+            if bev.out is not None:
+                out_path = bev.out
+            elif bev.dir is not None:
+                out_path = bev.dir.joinpath(f"{song_path.stem}.mp4")
+
+            # clip audio
+            invocate(
+                "ffmpeg",
+                args=[
+                    "-ss",
+                    str(start_timestamp),
+                    "-to",
+                    str(end_timestamp),
+                    "-i",
+                    song_path,
+                    song_clip_path,
+                ],
+                cwd=tmpdir,
+                errcode=3,
+            )
+
+            # get album art
+            invocate(
+                "ffmpeg",
+                args=[
+                    "-i",
+                    song_path,
+                    "-an",
+                    song_cover_path,
+                ],
+                cwd=tmpdir,
+                errcode=3,
+            )
+
+            # make video
+            invocate(
+                "ffmpeg",
+                args=[
+                    "-loop",
+                    "1",
+                    "-i",
+                    song_cover_path,
+                    "-i",
+                    song_clip_path,
+                    "-c:a",
+                    "aac",
+                    "-vcodec",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-preset",
+                    "ultrafast",
+                    "-tune",
+                    "stillimage",
+                    "-shortest",
+                    out_path,
+                ],
+                errcode=3,
+            )
 
     print(f"\npymtheg: info: all operations successful. have a great {part_of_day()}.")
 
@@ -172,13 +210,19 @@ def part_of_day():
     )
 
 
-def parse_timestamp(ts: str) -> Optional[int]:
+def parse_timestamp(ts: str, relative_to: Optional[int] = 0) -> Optional[int]:
     """
     parse user-submitted timestamp
 
     ts: str
         timestamp following [hh:mm:]ss format (e.g. 2:49, 5:18:18)
     """
+    timestamp = 0
+
+    if ts.startswith("+") and relative_to is not None:
+        ts = ts[1:]
+        timestamp += relative_to
+
     sts = ts.split(":")  # split time stamp (hh:mm:ss)
     sts.reverse()  # (ss:mm:hh)
 
@@ -193,7 +237,7 @@ def parse_timestamp(ts: str) -> Optional[int]:
             else:
                 return None
 
-        return total_ss
+        return timestamp + total_ss
 
     else:
         return None
@@ -204,7 +248,6 @@ def invocate(
     args: Iterable[Optional[Union[str, Path]]] = [],
     cwd: Optional[Path] = None,
     errcode: int = -1,
-    split: bool = False,
 ) -> subprocess.CompletedProcess:
     """
     invocates command using subprocess.run
@@ -217,22 +260,17 @@ def invocate(
         working directory for process to be run
     errcode: int = -1,
         exit code for if the process returns non-zero
-    split: bool = False,
-        split arguments (only used for bev.sdargs)
     """
 
     invocation: List[Union[str, Path]] = [name]
 
     for arg in args:
         if arg is not None:
-            if split and isinstance(arg, str):
-                invocation += arg.split()
-            else:
-                invocation.append(arg)
+            invocation.append(arg)
 
     try:
         print(
-            f"\npymtheg: info: invocating command '{' '.join([str(p) for p in invocation])}'"
+            f"pymtheg: info: invocating command '{' '.join([str(p) for p in invocation])}'\n"
         )
         return subprocess.run(invocation, cwd=cwd, universal_newlines=True, check=True)
 
@@ -282,7 +320,7 @@ def get_args() -> Behaviour:
         help="output file path, overrides directory arg",
         default=None,
     )
-    parser.add_argument("-sda", "--sdargs", help="args to pass to spotdl", default=None)
+    parser.add_argument("-sda", "--sdargs", help="args to pass to spotdl", default="")
     parser.add_argument(
         "-cl",
         "--clip-length",

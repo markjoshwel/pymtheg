@@ -29,11 +29,12 @@ You can then either use pip to install the dependencies from requirements.txt, o
 ### On Termux
 
 Currently, the latest version of rapidfuzz (dependency of spotDL, a core dependency of
-pymtheg) will fail to build. (https://github.com/maxbachmann/RapidFuzz/issues/195)
+pymtheg) will fail to build.
+([maxbachmann/Rapidfuzz#195](https://github.com/maxbachmann/RapidFuzz/issues/195))
 
 The current solution is to install a slightly older version of the package.
 
-```
+```text
 pip install rapidfuzz==1.9.1
 ```
 
