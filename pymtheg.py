@@ -39,6 +39,22 @@ from pathlib import Path
 import subprocess
 
 
+QUERY_CLIP_START = "  -   clip end: "
+QUERY_CLIP_END = "  - clip start: "
+QUERY_CLIP_STATUS = "  -     status: "
+
+MSG_INFO = ""
+MSG_DEBUG = ""
+MSG_ERROR = ""
+
+_FF_QUIET = "-hide_banner -loglevel error"
+FF_QUIET: List[str] = _FF_QUIET.split()
+CLIP_FFARGS: str = _FF_QUIET + (
+    " -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune "
+    "stillimage -shortest"
+)
+
+
 class Behaviour(NamedTuple):
     """
     typed command line argument tuple
@@ -47,8 +63,8 @@ class Behaviour(NamedTuple):
     query: str
     dir: Path
     out: Optional[Path]
-    sdargs: str
-    ffargs: str
+    sdargs: List[str]
+    ffargs: List[str]
     clip_length: int
     use_defaults: bool
 
@@ -65,9 +81,7 @@ def main() -> None:
         tmpdir = Path(_tmpdir)
 
         # download songs
-        invocate(
-            name="spotdl", args=[bev.query] + bev.sdargs.split(), cwd=tmpdir, errcode=2
-        )
+        invocate(name="spotdl", args=[bev.query] + bev.sdargs, cwd=tmpdir, errcode=2)
 
         # process songs
         if bev.use_defaults:
@@ -75,7 +89,7 @@ def main() -> None:
                 "\npymtheg: info: using defaults, clip start will be 0 and clip end will"
                 f" be {bev.clip_length}"
             )
-        
+
         else:
             print("\npymtheg: info: enter timestamps in format [hh:mm:]ss")
             print("               end timestamp can be relative, prefix with '+'")
@@ -86,17 +100,28 @@ def main() -> None:
             if song_path.suffix not in [".m4a", ".ogg", ".flac", ".mp3", ".wav", ".opus"]:
                 continue
 
+            print(f"- {song_path.stem}")
+
+            _msg = f"{QUERY_CLIP_STATUS}probe song duration"
+            print(_msg, end="\r")
+
             # duration retrieval
             proc = invocate(
                 "ffprobe",
-                args=["-hide_banner", "-nostats", "-print_format", "json", "-show_format", song_path],
+                args=[
+                    "-print_format",
+                    "json",
+                    "-show_entries",
+                    "format=duration",
+                    song_path,
+                ],
                 capture_output=True,
             )
             song_duration: int = int(
                 loads(proc.stdout)["format"]["duration"].split(".")[0]
             )
 
-            print(f"  {song_path.stem}")
+            print(" " * len(_msg), end="\r")
 
             # get timestamps
             start_timestamp = 0
@@ -104,9 +129,8 @@ def main() -> None:
 
             if not bev.use_defaults:
                 # starting timestamp
-                _query = "    clip start: "
                 while True:
-                    response = input(f"{_query}0\r{_query}")
+                    response = input(f"{QUERY_CLIP_START}0\r{QUERY_CLIP_START}")
 
                     if response != "":
                         _start_timestamp = parse_timestamp(response)
@@ -114,14 +138,14 @@ def main() -> None:
                         if _start_timestamp is None:
                             # invalid format
                             print(
-                                (" " * len(_query)) + ("^" * len(response)),
+                                (" " * len(QUERY_CLIP_START)) + ("^" * len(response)),
                                 "invalid timestamp",
                             )
 
                         elif _start_timestamp >= song_duration:
                             # invalid, timestamp >= song duration
                             print(
-                                (" " * len(_query)) + ("^" * len(response)),
+                                (" " * len(QUERY_CLIP_START)) + ("^" * len(response)),
                                 "timestamp exceeds song duration",
                             )
 
@@ -134,9 +158,10 @@ def main() -> None:
                         break
 
                 # ending timestamp
-                _query = "      clip end: "
                 while True:
-                    response = input(f"{_query}+{bev.clip_length}\r{_query}")
+                    response = input(
+                        f"{QUERY_CLIP_END}+{bev.clip_length}\r{QUERY_CLIP_END}"
+                    )
                     if response != "":
                         _end_timestamp = parse_timestamp(
                             response, relative_to=start_timestamp
@@ -145,7 +170,7 @@ def main() -> None:
                         if _end_timestamp is None:
                             # reprompt if invalid
                             print(
-                                (" " * len(_query)) + ("^" * len(response)),
+                                (" " * len(QUERY_CLIP_END)) + ("^" * len(response)),
                                 "invalid timestamp",
                             )
 
@@ -166,11 +191,13 @@ def main() -> None:
                 out_path = bev.out
 
             # clip audio
+            _msg = f"{QUERY_CLIP_STATUS}clip audio"
+            print(_msg, end="\r")
+
             invocate(
                 "ffmpeg",
                 args=[
-                    "-hide_banner",
-                    "-nostats",
+                    *FF_QUIET,
                     "-ss",
                     str(start_timestamp),
                     "-to",
@@ -183,12 +210,16 @@ def main() -> None:
                 errcode=3,
             )
 
+            print(" " * len(_msg), end="\r")
+
             # get album art
+            _msg = f"{QUERY_CLIP_STATUS}getting album art"
+            print(_msg, end="\r")
+
             invocate(
                 "ffmpeg",
                 args=[
-                    "-hide_banner",
-                    "-nostats",
+                    *FF_QUIET,
                     "-i",
                     song_path,
                     "-an",
@@ -198,16 +229,16 @@ def main() -> None:
                 errcode=3,
             )
 
-            # create clip
+            print(" " * len(_msg), end="\r")
+
+            # creating clip
+            print(f"{QUERY_CLIP_STATUS}creating clip")  # no \r because ffmpeg output
+
             invocate(
                 "ffmpeg",
-                args=["-i", song_cover_path, "-i", song_clip_path]
-                + bev.ffargs.split()
-                + [out_path],
+                args=["-i", song_cover_path, "-i", song_clip_path, *bev.ffargs, out_path],
                 errcode=3,
             )
-
-            print()
 
     print(f"\npymtheg: info: all operations successful. have a great {part_of_day()}.")
 
@@ -359,10 +390,7 @@ def get_args() -> Behaviour:
         "-ffa",
         "--ffargs",
         help="args to pass to ffmpeg for clip creation",
-        default=(
-            "-loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune "
-            "stillimage -shortest"
-        ),
+        default=CLIP_FFARGS,
     )
     parser.add_argument(
         "-cl",
@@ -386,8 +414,8 @@ def get_args() -> Behaviour:
         query=args.query,
         dir=args.dir,
         out=args.out,
-        sdargs=args.sdargs,
-        ffargs=args.ffargs,
+        sdargs=args.sdargs.split(),
+        ffargs=args.ffargs.split(),
         clip_length=args.clip_length,
         use_defaults=args.use_defaults,
     )
