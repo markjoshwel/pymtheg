@@ -39,17 +39,10 @@ from pathlib import Path
 import subprocess
 
 
-QUERY_CLIP_START = "  -   clip end: "
-QUERY_CLIP_END = "  - clip start: "
-QUERY_CLIP_STATUS = "  -     status: "
-
-MSG_INFO = ""
-MSG_DEBUG = ""
-MSG_ERROR = ""
-
 FFARGS: str = (
     "-hide_banner -loglevel error -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p "
-    "-preset ultrafast -tune stillimage -shortest"
+    "-vf scale=iw+mod(iw,2):ih+mod(ih,2):flags=neighbor -preset ultrafast "
+    "-tune stillimage -shortest"
 )
 
 
@@ -75,7 +68,7 @@ def main() -> None:
 
     # make tempdir
     with TemporaryDirectory() as _tmpdir:
-        # print(f"pymtheg: debug: {_tmpdir}")
+        print(f"pymtheg: debug: {_tmpdir}")
         tmpdir = Path(_tmpdir)
 
         # download songs
@@ -91,7 +84,7 @@ def main() -> None:
         else:
             print("\npymtheg: info: enter timestamps in format [hh:mm:]ss")
             print("               end timestamp can be relative, prefix with '+'")
-            print("               press enter to use given defaults\n")
+            print("               press enter to use given defaults (end, start)\n")
 
         for song_path in tmpdir.rglob("*.*"):
             # ensure that file was export of spotDL (list from spotdl -h)
@@ -100,7 +93,20 @@ def main() -> None:
 
             print(f"- {song_path.stem}")
 
-            _msg = f"{QUERY_CLIP_STATUS}probe song duration"
+            # generate query/info messages
+            _query_clip_end = f"clip end (+{bev.clip_length})"
+            _query_clip_start = f"clip start (0)"
+            _info_clip_status = "status"
+
+            query_clip_end = "  - {}: ".format(_query_clip_end)
+            query_clip_start = "  - {}: ".format(
+                _query_clip_start.rjust(len(_query_clip_end)),
+            )
+            info_clip_status = "  - {}: ".format(
+                _info_clip_status.rjust(len(_query_clip_end)),
+            )
+
+            _msg = f"{info_clip_status}probe song duration"
             print(_msg, end="\r")
 
             # duration retrieval
@@ -128,7 +134,7 @@ def main() -> None:
             if not bev.use_defaults:
                 # starting timestamp
                 while True:
-                    response = input(f"{QUERY_CLIP_START}0\r{QUERY_CLIP_START}")
+                    response = input(query_clip_start)
 
                     if response != "":
                         _start_timestamp = parse_timestamp(response)
@@ -136,14 +142,14 @@ def main() -> None:
                         if _start_timestamp is None:
                             # invalid format
                             print(
-                                (" " * len(QUERY_CLIP_START)) + ("^" * len(response)),
+                                (" " * len(query_clip_start)) + ("^" * len(response)),
                                 "invalid timestamp",
                             )
 
                         elif _start_timestamp >= song_duration:
                             # invalid, timestamp >= song duration
                             print(
-                                (" " * len(QUERY_CLIP_START)) + ("^" * len(response)),
+                                (" " * len(query_clip_start)) + ("^" * len(response)),
                                 "timestamp exceeds song duration",
                             )
 
@@ -157,9 +163,7 @@ def main() -> None:
 
                 # ending timestamp
                 while True:
-                    response = input(
-                        f"{QUERY_CLIP_END}+{bev.clip_length}\r{QUERY_CLIP_END}"
-                    )
+                    response = input(query_clip_end)
                     if response != "":
                         _end_timestamp = parse_timestamp(
                             response, relative_to=start_timestamp
@@ -168,7 +172,7 @@ def main() -> None:
                         if _end_timestamp is None:
                             # reprompt if invalid
                             print(
-                                (" " * len(QUERY_CLIP_END)) + ("^" * len(response)),
+                                (" " * len(query_clip_end)) + ("^" * len(response)),
                                 "invalid timestamp",
                             )
 
@@ -189,7 +193,7 @@ def main() -> None:
                 out_path = bev.out
 
             # clip audio
-            _msg = f"{QUERY_CLIP_STATUS}clip audio"
+            _msg = f"{info_clip_status}clip audio"
             print(_msg, end="\r")
 
             invocate(
@@ -211,7 +215,7 @@ def main() -> None:
             print(" " * len(_msg), end="\r")
 
             # get album art
-            _msg = f"{QUERY_CLIP_STATUS}getting album art"
+            _msg = f"{info_clip_status}getting album art"
             print(_msg, end="\r")
 
             invocate(
@@ -230,7 +234,7 @@ def main() -> None:
             print(" " * len(_msg), end="\r")
 
             # create clip
-            print(f"{QUERY_CLIP_STATUS}creating clip")  # no \r because ffmpeg output
+            print(f"{info_clip_status}creating clip")  # no \r because ffmpeg output
 
             invocate(
                 "ffmpeg",
