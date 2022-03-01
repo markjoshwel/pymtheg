@@ -46,7 +46,8 @@ Write the following into `$HOME/bin/termux-url-opener`.
 ```text
 #!/bin/bash
 
-pymtheg $1 -d ~/storage/movies/pymtheg/
+[ ! -d $HOME/storage/movies/pymtheg/ ] && mkdir $HOME/storage/movies/pymtheg/
+pymtheg $1 -d $HOME/storage/movies/pymtheg/ && termux-media-scan $HOME/storage/movies/pymtheg/ -r
 ```
 
 Alternatively, you can run the following command to obtain the script:
