@@ -6,9 +6,12 @@ Miscallaneous updates
 
 - throw an error if `-o` argument is set to a directory
 
-- allow user to pass ffmpeg arguments for clip creation
+- re-query user if clip start timestamp transcends song duration
 
-- re-query user if clip start timestamp transcends song length
+- add `-ffa`, `--ffargs` argument, allows passthrough of ffmpeg arguments for clip
+  creation
+
+- add `-ud`, `--use-defaults` argument, uses defaults of 0, +clip_length
 
 ## 1.1.0
 

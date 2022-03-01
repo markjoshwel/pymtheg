@@ -29,7 +29,7 @@ For more information, please refer to <http://unlicense.org/>
 """
 
 from json import loads
-from typing import Iterable, List, NamedTuple, Optional, Union
+from typing import Iterable, List, NamedTuple, Optional, Type, Union
 
 from tempfile import TemporaryDirectory
 from argparse import ArgumentParser
@@ -50,6 +50,7 @@ class Behaviour(NamedTuple):
     sdargs: str
     ffargs: str
     clip_length: int
+    use_defaults: bool
 
 
 def main() -> None:
@@ -75,13 +76,14 @@ def main() -> None:
 
         for song_path in tmpdir.rglob("*.*"):
             # ensure that file was export of spotDL (list from spotdl -h)
-            if song_path.suffix not in ["m4a", "ogg", "flac", "mp3", "wav", "opus"]:
+            if song_path.suffix not in [".m4a", ".ogg", ".flac", ".mp3", ".wav", ".opus"]:
                 continue
 
             # duration retrieval
             proc = invocate(
                 "ffprobe",
                 args=["-v", "quiet", "-print_format", "json", "-show_format", song_path],
+                capture_output=True,
             )
             song_duration: int = int(
                 loads(proc.stdout)["format"]["duration"].split(".")[0]
@@ -89,62 +91,63 @@ def main() -> None:
 
             print(f"  {song_path.stem}")
 
-            # get starting timestamp
+            # get timestamps
             start_timestamp = 0
-
-            _query = "    clip start: "
-            while True:
-                response = input(f"{_query}0\r{_query}")
-
-                if response != "":
-                    _start_timestamp = parse_timestamp(response)
-
-                    if _start_timestamp is None:
-                        # invalid format
-                        print(
-                            (" " * len(_query)) + ("^" * len(response)),
-                            "invalid timestamp",
-                        )
-
-                    elif _start_timestamp >= song_duration:
-                        # invalid, timestamp >= song duration
-                        print(
-                            (" " * len(_query)) + ("^" * len(response)),
-                            "timestamp exceeds song duration",
-                        )
-
-                    else:
-                        # valid, continue
-                        start_timestamp = _start_timestamp
-                        break
-
-                elif response == "":
-                    break
-
-            # get ending timestamp
             end_timestamp: int = start_timestamp + bev.clip_length
 
-            _query = "      clip end: "
-            while True:
-                response = input(f"{_query}+{bev.clip_length}\r{_query}")
-                if response != "":
-                    _end_timestamp = parse_timestamp(
-                        response, relative_to=start_timestamp
-                    )
+            if not bev.use_defaults:
+                # starting timestamp
+                _query = "    clip start: "
+                while True:
+                    response = input(f"{_query}0\r{_query}")
 
-                    if _end_timestamp is None:
-                        # reprompt if invalid
-                        print(
-                            (" " * len(_query)) + ("^" * len(response)),
-                            "invalid timestamp",
-                        )
+                    if response != "":
+                        _start_timestamp = parse_timestamp(response)
 
-                    else:
-                        end_timestamp = _end_timestamp
+                        if _start_timestamp is None:
+                            # invalid format
+                            print(
+                                (" " * len(_query)) + ("^" * len(response)),
+                                "invalid timestamp",
+                            )
+
+                        elif _start_timestamp >= song_duration:
+                            # invalid, timestamp >= song duration
+                            print(
+                                (" " * len(_query)) + ("^" * len(response)),
+                                "timestamp exceeds song duration",
+                            )
+
+                        else:
+                            # valid, continue
+                            start_timestamp = _start_timestamp
+                            break
+
+                    elif response == "":
                         break
 
-                elif response == "":
-                    break
+                # ending timestamp
+                _query = "      clip end: "
+                while True:
+                    response = input(f"{_query}+{bev.clip_length}\r{_query}")
+                    if response != "":
+                        _end_timestamp = parse_timestamp(
+                            response, relative_to=start_timestamp
+                        )
+
+                        if _end_timestamp is None:
+                            # reprompt if invalid
+                            print(
+                                (" " * len(_query)) + ("^" * len(response)),
+                                "invalid timestamp",
+                            )
+
+                        else:
+                            end_timestamp = _end_timestamp
+                            break
+
+                    elif response == "":
+                        break
 
             # construct paths
             song_path = song_path.absolute()
@@ -254,6 +257,7 @@ def invocate(
     args: Iterable[Optional[Union[str, Path]]] = [],
     cwd: Optional[Path] = None,
     errcode: int = -1,
+    capture_output: bool = False,
 ) -> subprocess.CompletedProcess:
     """
     invocates command using subprocess.run
@@ -279,13 +283,14 @@ def invocate(
             invocation,
             cwd=cwd,
             universal_newlines=True,
+            capture_output=capture_output,
         )
 
         if proc.returncode != 0:
             print(
                 "\npymtheg: error: error during invocation of "
-                f"{' '.join([str(p) for p in invocation])}, returned {proc.returncode}) "
-                "see above for details"
+                f"'{' '.join([str(p) for p in invocation])}', returned non-zero exit "
+                f"code {proc.returncode}, see above for details"
             )
             exit(proc.returncode)
 
@@ -350,6 +355,14 @@ def get_args() -> Behaviour:
         type=int,
         default=15,
     )
+    parser.add_argument(
+        "-ud",
+        "--use-defaults",
+        help="use 0 as clip start and --clip-length as clip end",
+        dest="use_defaults",
+        action="store_true",
+        default=False,
+    )
 
     args = parser.parse_args()
     bev = Behaviour(
@@ -359,6 +372,7 @@ def get_args() -> Behaviour:
         sdargs=args.sdargs,
         ffargs=args.ffargs,
         clip_length=args.clip_length,
+        use_defaults=args.use_defaults,
     )
 
     # validate:

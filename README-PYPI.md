@@ -12,7 +12,7 @@ contribution instructions/information.
 ## Usage
 
 ```text
-usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] [-cl CLIP_LENGTH] query
+usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] [-ffa FFARGS] [-cl CLIP_LENGTH] [-ud] query
 
 a python script to share songs from Spotify/YouTube as a 15 second clip
 
@@ -26,9 +26,10 @@ options:
   -sda SDARGS, --sdargs SDARGS
                         args to pass to spotdl
   -ffa FFARGS, --ffargs FFARGS
-                        args to pass ffmpeg for clip creation
+                        args to pass to ffmpeg for clip creation
   -cl CLIP_LENGTH, --clip-length CLIP_LENGTH
                         length of output clip in seconds (default 15)
+  -ud, --use-defaults   use 0 as clip start and --clip-length as clip end
 ```
 
 **Notes:**
