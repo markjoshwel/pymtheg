@@ -47,11 +47,9 @@ MSG_INFO = ""
 MSG_DEBUG = ""
 MSG_ERROR = ""
 
-_FF_QUIET = "-hide_banner -loglevel error"
-FF_QUIET: List[str] = _FF_QUIET.split()
-CLIP_FFARGS: str = _FF_QUIET + (
-    " -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune "
-    "stillimage -shortest"
+FFARGS: str = (
+    "-hide_banner -loglevel error -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p "
+    "-preset ultrafast -tune stillimage -shortest"
 )
 
 
@@ -87,13 +85,13 @@ def main() -> None:
         if bev.use_defaults:
             print(
                 "\npymtheg: info: using defaults, clip start will be 0 and clip end will"
-                f" be {bev.clip_length}"
+                f" be {bev.clip_length}\n"
             )
 
         else:
             print("\npymtheg: info: enter timestamps in format [hh:mm:]ss")
             print("               end timestamp can be relative, prefix with '+'")
-            print("               press enter to use given defaults")
+            print("               press enter to use given defaults\n")
 
         for song_path in tmpdir.rglob("*.*"):
             # ensure that file was export of spotDL (list from spotdl -h)
@@ -197,7 +195,6 @@ def main() -> None:
             invocate(
                 "ffmpeg",
                 args=[
-                    *FF_QUIET,
                     "-ss",
                     str(start_timestamp),
                     "-to",
@@ -208,6 +205,7 @@ def main() -> None:
                 ],
                 cwd=tmpdir,
                 errcode=3,
+                capture_output=True,
             )
 
             print(" " * len(_msg), end="\r")
@@ -219,7 +217,6 @@ def main() -> None:
             invocate(
                 "ffmpeg",
                 args=[
-                    *FF_QUIET,
                     "-i",
                     song_path,
                     "-an",
@@ -227,11 +224,12 @@ def main() -> None:
                 ],
                 cwd=tmpdir,
                 errcode=3,
+                capture_output=True,
             )
 
             print(" " * len(_msg), end="\r")
 
-            # creating clip
+            # create clip
             print(f"{QUERY_CLIP_STATUS}creating clip")  # no \r because ffmpeg output
 
             invocate(
@@ -372,6 +370,7 @@ def get_args() -> Behaviour:
         description=(
             "a python script to share songs from Spotify/YouTube as a 15 second clip"
         ),
+        epilog=f"ffargs default: '{FFARGS}'",
     )
 
     parser.add_argument("query", help="song/link from spotify/youtube")
@@ -390,7 +389,7 @@ def get_args() -> Behaviour:
         "-ffa",
         "--ffargs",
         help="args to pass to ffmpeg for clip creation",
-        default=CLIP_FFARGS,
+        default=FFARGS,
     )
     parser.add_argument(
         "-cl",

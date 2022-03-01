@@ -103,12 +103,10 @@ options:
   -cl CLIP_LENGTH, --clip-length CLIP_LENGTH
                         length of output clip in seconds (default 15)
   -ud, --use-defaults   use 0 as clip start and --clip-length as clip end
+
+ffargs default: '-hide_banner -loglevel error -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune
+stillimage -shortest'
 ```
-
-**Notes:**
-
-- ffargs default:
-  `-hide_banner -loglevel error -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune stillimage -shortest`
 
 ### Return Codes
 

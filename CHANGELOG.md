@@ -1,8 +1,15 @@
 # Changelog
 
+## 1.2.1
+
+Minor change
+
+- capture output for ffmpeg invocations except clip creation rather than use
+  `-hide_banner -loglevel error` for better debugging
+
 ## 1.2.0
 
-Miscallaneous updates
+Quality of use + miscallaneous updates
 
 - throw an error if `-o` argument is set to a directory
 
@@ -13,7 +20,7 @@ Miscallaneous updates
 
 - add `-ud`, `--use-defaults` argument, uses defaults of 0, +clip_length
 
-- add `-v quiet` to ffmpeg invocations to reduce terminal clutter
+- add `-hide_banner -loglevel error` to ffmpeg invocations to reduce terminal clutter
 
 ## 1.1.0
 
