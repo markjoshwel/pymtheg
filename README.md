@@ -108,7 +108,7 @@ options:
 **Notes:**
 
 - ffargs default:
-  `-v quiet -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune stillimage -shortest`
+  `-hide_banner -loglevel error -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune stillimage -shortest`
 
 ### Return Codes
 

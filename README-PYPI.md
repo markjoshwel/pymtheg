@@ -6,9 +6,6 @@ use with Termux.
 See the [repository](https://github.com/markjoshwel/pymtheg) for more installation and
 contribution instructions/information.
 
-- [Usage](#usage)
-- [License](#license)
-
 ## Usage
 
 ```text
@@ -35,10 +32,11 @@ options:
 **Notes:**
 
 - ffargs default:
-  `-v quiet -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune stillimage -shortest`
+  `-hide_banner -loglevel error -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune stillimage -shortest`
 
 ## License
 
 pymtheg is unlicensed with The Unlicense. In short, do whatever. You can find copies of
-the license in the [UNLICENSE](UNLICENSE) file or in the
-[pymtheg module docstring](pymtheg.py).
+the license in the
+[UNLICENSE](https://github.com/markjoshwel/pymtheg/blob/main/UNLICENSE) file or in the
+[pymtheg module docstring](https://github.com/markjoshwel/pymtheg/blob/main/pymtheg.py#L5).
