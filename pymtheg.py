@@ -70,9 +70,16 @@ def main() -> None:
         )
 
         # process songs
-        print("\npymtheg: info: enter timestamps in format [hh:mm:]ss")
-        print("               end timestamp can be relative, prefix with '+'")
-        print("               press enter to use given defaults")
+        if bev.use_defaults:
+            print(
+                "\npymtheg: info: using defaults, clip start will be 0 and clip end will"
+                f" be {bev.clip_length}"
+            )
+        
+        else:
+            print("\npymtheg: info: enter timestamps in format [hh:mm:]ss")
+            print("               end timestamp can be relative, prefix with '+'")
+            print("               press enter to use given defaults")
 
         for song_path in tmpdir.rglob("*.*"):
             # ensure that file was export of spotDL (list from spotdl -h)
@@ -82,7 +89,7 @@ def main() -> None:
             # duration retrieval
             proc = invocate(
                 "ffprobe",
-                args=["-v", "quiet", "-print_format", "json", "-show_format", song_path],
+                args=["-hide_banner", "-nostats", "-print_format", "json", "-show_format", song_path],
                 capture_output=True,
             )
             song_duration: int = int(
@@ -162,6 +169,8 @@ def main() -> None:
             invocate(
                 "ffmpeg",
                 args=[
+                    "-hide_banner",
+                    "-nostats",
                     "-ss",
                     str(start_timestamp),
                     "-to",
@@ -178,6 +187,8 @@ def main() -> None:
             invocate(
                 "ffmpeg",
                 args=[
+                    "-hide_banner",
+                    "-nostats",
                     "-i",
                     song_path,
                     "-an",
@@ -287,6 +298,12 @@ def invocate(
         )
 
         if proc.returncode != 0:
+            if capture_output:
+                if proc.stdout != "":
+                    print(f"\npymtheg: error: invocation stdout:\n{proc.stdout}")
+                if proc.stderr != "":
+                    print(f"\npymtheg: error: invocation stderr:\n{proc.stderr}")
+
             print(
                 "\npymtheg: error: error during invocation of "
                 f"'{' '.join([str(p) for p in invocation])}', returned non-zero exit "
@@ -343,8 +360,8 @@ def get_args() -> Behaviour:
         "--ffargs",
         help="args to pass to ffmpeg for clip creation",
         default=(
-            "-loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast "
-            "-tune stillimage -shortest"
+            "-loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune "
+            "stillimage -shortest"
         ),
     )
     parser.add_argument(

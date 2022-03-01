@@ -13,6 +13,8 @@ Miscallaneous updates
 
 - add `-ud`, `--use-defaults` argument, uses defaults of 0, +clip_length
 
+- add `-v quiet` to ffmpeg invocations to reduce terminal clutter
+
 ## 1.1.0
 
 Instagram-friendly video output using AAC as output audio codec + usage improvements

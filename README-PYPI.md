@@ -35,7 +35,7 @@ options:
 **Notes:**
 
 - ffargs default:
-  `-loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune stillimage -shortest`
+  `-v quiet -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune stillimage -shortest`
 
 ## License
 
