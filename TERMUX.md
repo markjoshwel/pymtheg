@@ -1,0 +1,96 @@
+# pymtheg on Termux
+
+## Prerequisites
+
+- Termux  
+  Links: [F-Droid](https://f-droid.org/packages/com.termux), [Google Play](https://play.google.com/store/apps/details?id=com.termux)
+
+- Termux:API  
+  Links: [F-Droid](https://f-droid.org/packages/com.termux.api), [Google Play](https://play.google.com/store/apps/details?id=com.termux.api)
+
+Ensure that Termux has the permission to draw over other apps before proceeding. This will allow URLs to be shared with Termux.
+
+## Setup
+
+### Quick Setup Script
+
+Run the following command in the terminal and relax a little with the wakelock held:
+
+```text
+curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-setup | sh
+```
+
+This script will work if:
+
+- You do not have a folder named `storage` in your `$HOME`, and
+- Your Termux installation is fresh, or
+- You have no termux-url-opener script
+
+(_Don't know what any of that meant? You're probably good, so don't sweat it!_)
+
+### Manual Setup
+
+1. Install Python
+
+   Firstly, upgrade your packages. This helps to with the Python installation.
+
+   ```
+   pkg update
+   ```
+
+   Once updated, install Python.
+
+   ```
+   pkg install python
+   ```
+
+2. Install pymtheg
+
+  Currently, only a certain version of rapidfuzz can be built on Android.
+
+  ```
+  pip install rapidfuzz==1.91
+  ```
+
+  ```
+  pip install pymtheg
+  ```
+
+3. Setup Internal Storage
+
+   By default, Termux does not have access to the internal storage. However, there is a command that allows us to gain access. Granted the permission when prompted.
+
+   ```
+   termux-setup-storage
+   ```
+
+  Once complete, make a folder named pymtheg in your Movies folder located in your internal storage. This is where pymtheg will store the 15 second clips.
+
+   ```
+   mkdir -p $HOME/storage/shared/Movies/pymtheg
+   ```
+
+3. Setup URL Opener
+
+   Write the following into a file with the path `$HOME/bin/termux-url-opener`. You may have to create a directory called `bin` using the command `mkdir $HOME/bin`.
+
+   ```shell
+   #!/bin/sh
+
+   # ensure pymtheg folder exists
+   [ ! -d $HOME/storage/shared/Movies/pymtheg/ ] && mkdir -p $HOME/storage/shared/Movies/pymtheg
+   # run pymtheg
+   pymtheg $1 -d $HOME/storage/shared/Movies/pymtheg/ || exit &?
+   # add clips to the android mediastore
+   termux-media-scan $HOME/storage/movies/pymtheg/ -r
+   ```
+
+   Alternatively, run this command to obtain the script:
+
+   ```
+   curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opener -o $HOME/bin/termux-url-opener
+   ```
+
+4. Enjoy!
+
+   To use pymtheg, share a Spotify/YouTube link with Termux (keep note of the timestamps before you do so!) and select Termux in the share sheet. Let pymtheg do its magic, and share your newly created clip!
