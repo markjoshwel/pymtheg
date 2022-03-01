@@ -10,10 +10,6 @@ Miscallaneous updates
 
 - re-query user if clip start timestamp transcends song length
 
-- not show command stdout/stderr unless invocation fails
-
-- not show `pythmeg: info: invocating command ...` unless invocation fails
-
 ## 1.1.0
 
 Instagram-friendly video output using AAC as output audio codec + usage improvements

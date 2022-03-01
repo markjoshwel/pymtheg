@@ -74,8 +74,11 @@ def main() -> None:
         print("               press enter to use given defaults")
 
         for song_path in tmpdir.rglob("*.*"):
+            # ensure that file was export of spotDL (list from spotdl -h)
+            if song_path.suffix not in ["m4a", "ogg", "flac", "mp3", "wav", "opus"]:
+                continue
 
-            # TODO: get song length
+            # duration retrieval
             proc = invocate(
                 "ffprobe",
                 args=["-v", "quiet", "-print_format", "json", "-show_format", song_path],
@@ -276,22 +279,13 @@ def invocate(
             invocation,
             cwd=cwd,
             universal_newlines=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
         )
 
         if proc.returncode != 0:
-            if proc.stdout != "":
-                print(f"pymtheg: info: invocation stdout\n{proc.stdout}")
-
-            if proc.stderr != "":
-                print(f"pymtheg: info: invocation stderr\n{proc.stderr}")
-
-            print(f"invocation:\n  invocation={invocation}\n  cwd={cwd}")
-
             print(
-                f"\npymtheg: error: error during command invocation ({proc.returncode}),"
-                " see above for details"
+                "\npymtheg: error: error during invocation of "
+                f"{' '.join([str(p) for p in invocation])}, returned {proc.returncode}) "
+                "see above for details"
             )
             exit(proc.returncode)
 

@@ -1,5 +1,6 @@
 #!/bin/sh
-pkg upgrade \
-  && pkg install python \
-  && pip install rapidfuzz==1.9.1 pymtheg \
+yes | pkg upgrade \
+  && yes | pkg install python \
+  && pip install rapidfuzz==1.9.1 \
+  && pip install pymtheg \
   && curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opener -o $HOME/bin/termux-url-opener
