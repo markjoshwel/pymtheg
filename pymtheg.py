@@ -41,9 +41,8 @@ import subprocess
 
 
 FFARGS: str = (
-    "-hide_banner -loglevel error -c:a aac -vcodec libx264 -pix_fmt yuv420p "
-    "-preset ultrafast -tune stillimage -shortest "
-    "-vf scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor' "
+    "-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p "
+    "-tune stillimage -vf scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor'"
 )
 
 
@@ -86,8 +85,8 @@ def main() -> None:
             print("\npymtheg: info: enter timestamps in format [hh:mm:]ss")
             print("               end timestamp can be relative, prefix with '+'")
             print(
-                  f"               press enter to use given defaults "
-                  f"({bev.clip_start}, +{bev.clip_length})\n"
+                f"               press enter to use given defaults "
+                f"({bev.clip_start}, +{bev.clip_length})\n"
             )
 
         for song_path in tmpdir.rglob("*.*"):
@@ -245,10 +244,14 @@ def main() -> None:
             invocate(
                 "ffmpeg",
                 args=[
+                    "-loop",
+                    "1",
                     "-i",
                     song_cover_path,
                     "-i",
                     song_clip_path,
+                    "-t",
+                    str(end_timestamp - start_timestamp),
                     *bev.ffargs,
                     video_clip_path,
                 ],
@@ -454,8 +457,10 @@ def get_args() -> Behaviour:
             exit(1)
 
         if bev.out.exists():
-            override_response = input(f"pymtheg: info: {bev.out} exists, override? (y/n)")
-            if override_response.lower() != "y":
+            overwrite_response = input(
+                f"pymtheg: info: {bev.out} exists, overwrite? (y/n) "
+            )
+            if overwrite_response.lower() != "y":
                 exit(1)
 
     if not bev.dir.exists():
