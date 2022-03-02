@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pymtheg"
-version = "1.2.1"
+version = "1.2.2"
 description = "A Python script to share songs from Spotify/YouTube as a 15 second clip."
 authors = ["Your Name <you@example.com>"]
 packages = [
@@ -16,6 +16,7 @@ classifiers = [
     "Topic :: Multimedia :: Video",
     "Topic :: Multimedia :: Sound/Audio",
 ]
+repository = "https://github.com/markjoshwel/pymtheg"
 keywords = ["music", "video", "audio", "cli", "utility"]
 include = ["CHANGELOG.md"]
 readme = "README-PYPI.md"
