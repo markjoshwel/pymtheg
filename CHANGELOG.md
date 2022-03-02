@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.2
+
+Bug fix + quality of use updates
+
+- add `-cs`, `--clip-start` for specifying default clip start
+
+- fix not visible by 2 errors
+
+- only create output clip file if clip creation was successful
+
 ## 1.2.1
 
 Minor change

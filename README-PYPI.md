@@ -1,7 +1,7 @@
 # pymtheg
 
-A Python script to share songs from Spotify/YouTube as a 15 second clip. Designed for
-use with Termux.
+A Python script to share songs from Spotify/YouTube as a 15 second clip.
+[Designed for use with Termux.](https://github.com/markjoshwel/pymtheg/blob/main/TERMUX.md)
 
 See the [repository](https://github.com/markjoshwel/pymtheg) for more installation and
 contribution instructions/information.
@@ -9,7 +9,7 @@ contribution instructions/information.
 ## Usage
 
 ```text
-usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] [-ffa FFARGS] [-cl CLIP_LENGTH] [-ud] query
+usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] [-ffa FFARGS] [-cs CLIP_START] [-cl CLIP_LENGTH] [-ud] query
 
 a python script to share songs from Spotify/YouTube as a 15 second clip
 
@@ -24,12 +24,14 @@ options:
                         args to pass to spotdl
   -ffa FFARGS, --ffargs FFARGS
                         args to pass to ffmpeg for clip creation
+  -cs CLIP_START, --clip-start CLIP_START
+                        clip start (default 0)
   -cl CLIP_LENGTH, --clip-length CLIP_LENGTH
                         length of output clip in seconds (default 15)
   -ud, --use-defaults   use 0 as clip start and --clip-length as clip end
 
-ffargs default: '-hide_banner -loglevel error -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune
-stillimage -shortest'
+ffargs default: '-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p -tune stillimage -vf
+scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor''
 ```
 
 ## License

@@ -8,8 +8,9 @@ use with Termux.
 - [Contributing](#contributing)
 - [License](#license)
 
-For Termux users looking for a quick setup script, see
-[Quick Termux Setup](#quick-termux-setup).
+Termux users see [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
+
+[![demo](https://asciinema.org/a/473157.svg)](https://asciinema.org/a/473157)
 
 ## Installation
 
@@ -29,52 +30,6 @@ git clone https://github.com/markjoshwel/pymtheg.git
 
 You can then either use pip to install the dependencies from requirements.txt, or use Poetry instead.
 
-### On Termux
-
-Currently, the latest version of rapidfuzz (dependency of spotDL, a core dependency of
-pymtheg) will fail to build.
-([maxbachmann/Rapidfuzz#195](https://github.com/maxbachmann/RapidFuzz/issues/195))
-
-The current solution is to install a slightly older version of the package.
-
-```text
-pip install rapidfuzz==1.9.1
-```
-
-Write the following into `$HOME/bin/termux-url-opener`.
-
-```text
-#!/bin/bash
-
-[ ! -d $HOME/storage/movies/pymtheg/ ] && mkdir $HOME/storage/movies/pymtheg/
-pymtheg $1 -d $HOME/storage/movies/pymtheg/ && termux-media-scan $HOME/storage/movies/pymtheg/ -r
-```
-
-Alternatively, you can run the following command to obtain the script:
-
-```text
-curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opener -o $HOME/bin/termux-url-opener
-```
-
-**Notes:**
-
-- This assumes you have no `$HOME/bin/termux-url-opener` script. If you do, you may have
- to tailer the following instructions to work with your current setup.
-
-- This also assumes that you already have a folder named `pymtheg` in the `Movies`
-  folder of your internal storage, and that you have already ran `termux-setup-storage`
-  to allow access of your internal storage from within Termux. If not, simply adjust the
-  script shown above accordingly.
-
-- If you did not install pymtheg through pip, change `pymtheg` to the path leading to
-  `pymtheg.py`, such as `~/scripts/pymtheg.py`.
-
-- If you have a copy of the repo and use Poetry, change `pymtheg` to
-  `poetry run pymtheg`. However do add a line before the pymtheg invocation to change
-  directories to the repository root or else the `poetry run` invocation will fail.
-
-- Dont forget to `chmod +x` the script after writing!
-
 ## Quick Termux Setup
 
 Copy the following command into the terminal:
@@ -86,7 +41,7 @@ curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-s
 ## Usage
 
 ```text
-usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] [-ffa FFARGS] [-cl CLIP_LENGTH] [-ud] query
+usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] [-ffa FFARGS] [-cs CLIP_START] [-cl CLIP_LENGTH] [-ud] query
 
 a python script to share songs from Spotify/YouTube as a 15 second clip
 
@@ -101,12 +56,14 @@ options:
                         args to pass to spotdl
   -ffa FFARGS, --ffargs FFARGS
                         args to pass to ffmpeg for clip creation
+  -cs CLIP_START, --clip-start CLIP_START
+                        clip start (default 0)
   -cl CLIP_LENGTH, --clip-length CLIP_LENGTH
                         length of output clip in seconds (default 15)
   -ud, --use-defaults   use 0 as clip start and --clip-length as clip end
 
-ffargs default: '-hide_banner -loglevel error -loop 1 -c:a aac -vcodec libx264 -pix_fmt yuv420p -preset ultrafast -tune
-stillimage -shortest'
+ffargs default: '-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p -tune stillimage -vf
+scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor''
 ```
 
 ### Return Codes
