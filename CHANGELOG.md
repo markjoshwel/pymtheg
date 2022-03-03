@@ -2,6 +2,13 @@
 
 ## 2.0.0
 
+Quality of use updates
+
+- status messages now have spinners
+- allow for timestamp re-querying through a confirmation prompt
+- allow for relative timestamp of `-1` equal to song length
+- (breaking) change `-cl`, `--clip-length` to `-ce`, `--clip-end`, with default `+15`
+
 ## 1.2.2
 
 Bug fix + quality of use updates

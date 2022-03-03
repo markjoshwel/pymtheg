@@ -1,5 +1,5 @@
 """
-pymtheg: A Python script to share songs from Spotify/YouTube as a 15 second clip
+pymtheg: A Python script to share songs from Spotify as a 15 second clip
 -------
 
 This is free and unencumbered software released into the public domain.
@@ -28,7 +28,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org/>
 """
 
-from json import loads
 from typing import Iterable, List, NamedTuple, Optional, Type, Union
 
 from tempfile import TemporaryDirectory
@@ -37,6 +36,7 @@ from traceback import print_tb
 from datetime import datetime
 from pathlib import Path
 from shutil import move
+from json import loads
 import subprocess
 
 
@@ -281,16 +281,21 @@ def part_of_day():
     )
 
 
-def parse_timestamp(ts: str, relative_to: Optional[int] = 0) -> Optional[int]:
+def parse_timestamp(ts: str, relative_to: Optional[int] = None) -> Optional[int]:
     """
     parse user-submitted timestamp
 
     ts: str
         timestamp following [hh:mm:]ss format (e.g. 2:49, 5:18:18)
+    relative_to: Optional[int] = 0
+        used for relative end timestamps; -1 == relative_to; +n == (relative_to + ts)
     """
     timestamp = 0
 
-    if ts.startswith("+") and relative_to is not None:
+    if ts.startswith("-") and relative_to is not None:
+        return relative_to
+
+    elif ts.startswith("+") and relative_to is not None:
         ts = ts[1:]
         timestamp += relative_to
 
@@ -332,6 +337,8 @@ def invocate(
         working directory for process to be run
     errcode: int = -1,
         exit code for if the process returns non-zero
+    capture_output: bool = False,
+        maps to subprocess.run(capture_output=); captures stdout and stderr
     """
 
     invocation: List[Union[str, Path]] = [name]
