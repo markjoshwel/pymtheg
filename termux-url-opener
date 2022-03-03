@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/bin/sh
 [ ! -d $HOME/storage ] && termux-setup-storage
 [ ! -d $HOME/storage/movies/pymtheg/ ] && mkdir $HOME/storage/movies/pymtheg/
 pymtheg $1 -d $HOME/storage/movies/pymtheg/ && termux-media-scan $HOME/storage/movies/pymtheg/ -r

@@ -8,7 +8,7 @@ use with Termux.
 - [Contributing](#contributing)
 - [License](#license)
 
-Termux users see [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
+See [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
 
 [![demo](https://asciinema.org/a/473157.svg)](https://asciinema.org/a/473157)
 
@@ -28,15 +28,8 @@ pip install pymtheg
 git clone https://github.com/markjoshwel/pymtheg.git
 ``````
 
-You can then either use pip to install the dependencies from requirements.txt, or use Poetry instead.
-
-## Quick Termux Setup
-
-Copy the following command into the terminal:
-
-```text
-curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-setup | sh
-```
+You can then either use pip to install the dependencies from requirements.txt, or use
+Poetry instead.
 
 ## Usage
 

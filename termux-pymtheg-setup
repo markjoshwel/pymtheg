@@ -1,6 +1,8 @@
 #!/bin/sh
 yes | pkg upgrade \
-  && yes | pkg install python ffmpeg \
+  && yes | pkg install python ffmpeg termux-api \
   && pip install rapidfuzz==1.9.1 \
   && pip install pymtheg \
-  && curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opener -o $HOME/bin/termux-url-opener
+  && mkdir $HOME/bin/ ; \
+  curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-url-opener -o $HOME/bin/termux-url-opener \
+  && echo; echo "pymtheg setup complete"

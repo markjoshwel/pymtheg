@@ -19,7 +19,9 @@ will allow URLs to be shared with Termux.
 
 ### Quick Setup Script
 
-Run the following command in the terminal and relax a little with the wakelock held:
+Run the following command in the terminal:
+
+(_This will take some time to complete, so come back after a while._)
 
 ```text
 curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-setup | sh
@@ -27,32 +29,33 @@ curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-s
 
 This script will work if:
 
-- You do not have a folder named `storage` in your `$HOME`, and
 - Your Termux installation is fresh, or
-- You have no termux-url-opener script
-
-(_Don't know what any of that meant? You're probably good, so don't sweat it!_)
+- You do not have a folder named `storage` in your home directory and have no
+  `termux-url-opener` script
 
 ### Manual Setup
 
-1. Install Python
+1. Install Python, ffmpeg and termux-api
 
-   Firstly, upgrade your packages. This helps to with the Python installation.
+   Firstly, upgrade your packages. This helps ensure that Python installs without a
+   hitch.
 
    ```text
    pkg update
    ```
 
-   Once updated, install Python.
+   Once updated, install the needed packages.
 
    ```text
-   pkg install python
+   pkg install python ffmpeg termux-api
    ```
 
 2. Install pymtheg
 
    Currently, only a certain version of rapidfuzz can be built on Android.
-  ([maxbachmann/RapidFuzz#195](https://github.com/maxbachmann/RapidFuzz/issues/195))
+   ([maxbachmann/RapidFuzz#195](https://github.com/maxbachmann/RapidFuzz/issues/195))
+   
+   This will take some time to build, so hold the wakelock and enjoy a cup.
 
    ```text
    pip install rapidfuzz==1.91
@@ -84,7 +87,7 @@ This script will work if:
    have to create a directory called `bin` using the command `mkdir $HOME/bin`.
 
    ```shell
-   #!/bin/shw
+   #!/bin/sh
 
    # ensure pymtheg folder exists
    [ ! -d $HOME/storage/shared/Movies/pymtheg/ ] && mkdir -p $HOME/storage/shared/Movies/pymtheg
