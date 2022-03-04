@@ -164,59 +164,72 @@ def main() -> None:
             end_timestamp: int = start_timestamp + _end_timestamp
 
             if not bev.use_defaults:
-                # starting timestamp
                 while True:
-                    response = input(query_clip_start)
+                    # starting timestamp
+                    while True:
+                        response = input(query_clip_start)
 
-                    if response != "":
-                        _start_timestamp = parse_timestamp(response)
+                        if response != "":
+                            _start_timestamp = parse_timestamp(response)
 
-                        if _start_timestamp is None:
-                            # invalid format
-                            print(
-                                (" " * indent) + ("^" * len(response)),
-                                "invalid timestamp",
-                            )
+                            if _start_timestamp is None:
+                                # invalid format
+                                print(
+                                    (" " * indent) + ("^" * len(response)),
+                                    "invalid timestamp",
+                                )
+    
+                            elif _start_timestamp >= song_duration:
+                                # invalid, timestamp >= song duration
+                                print(
+                                    (" " * indent) + ("^" * len(response)),
+                                    "timestamp exceeds song duration",
+                                )
 
-                        elif _start_timestamp >= song_duration:
-                            # invalid, timestamp >= song duration
-                            print(
-                                (" " * indent) + ("^" * len(response)),
-                                "timestamp exceeds song duration",
-                            )
+                            else:
+                                # valid, continue
+                                end_timestamp = (end_timestamp - start_timestamp) + _start_timestamp
+                                start_timestamp = _start_timestamp
+                                break
 
-                        else:
-                            # valid, continue
-                            start_timestamp = _start_timestamp
-                            end_timestamp = _start_timestamp + _end_timestamp
+                        elif response == "":
                             break
 
-                    elif response == "":
-                        break
-
-                # ending timestamp
-                while True:
-                    response = input(query_clip_end)
-                    if response != "":
-                        _end_timestamp = parse_timestamp(
-                            response,
-                            relative_to=start_timestamp,
-                            song_duration=song_duration,
-                        )
-
-                        if _end_timestamp is None:
-                            # reprompt if invalid
-                            print(
-                                (" " * indent) + ("^" * len(response)),
-                                "invalid timestamp",
+                    # ending timestamp
+                    while True:
+                        response = input(query_clip_end)
+                        if response != "":
+                            _end_timestamp = parse_timestamp(
+                                response,
+                                relative_to=start_timestamp,
+                                song_duration=song_duration,
                             )
 
-                        else:
-                            end_timestamp = _end_timestamp
+                            if _end_timestamp is None:
+                                # reprompt if invalid
+                                print(
+                                    (" " * indent) + ("^" * len(response)),
+                                    "invalid timestamp",
+                                )
+
+                            else:
+                                end_timestamp = _end_timestamp
+                                break
+
+                        elif response == "":
                             break
 
-                    elif response == "":
+                    # confirm timestamps
+                    if bev.yes:
                         break
+                    
+                    confirmation_response = input(f"{info_notice}confirm timestamps? (y/n): ").lower()
+                    if confirmation_response == "y":
+                        break
+
+                    else:
+                        pass
+
 
             # construct paths
             song_path = song_path.absolute()
@@ -230,7 +243,8 @@ def main() -> None:
 
             elif (
                 # no -o specified and out_path exists
-                out_path.exists() and bev.yes is False
+                out_path.exists()
+                and bev.yes is False
             ):
                 print(f"{info_notice}'{out_path.name}' exists in output dir.")
                 overwrite_response = input(
@@ -298,7 +312,7 @@ def main() -> None:
                 )
 
                 print(" " * len(_msg), end="\r")
-            
+
             else:
                 song_cover_path = bev.image
 
