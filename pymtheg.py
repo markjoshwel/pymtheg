@@ -57,8 +57,10 @@ class Behaviour(NamedTuple):
     sdargs: List[str]
     ffargs: List[str]
     clip_start: int
-    clip_length: int
+    clip_end: str
+    image: Optional[Path]
     use_defaults: bool
+    yes: bool
 
 
 def main() -> None:
@@ -78,7 +80,7 @@ def main() -> None:
         if bev.use_defaults:
             print(
                 "\npymtheg: info: using defaults, clip start will be 0 and clip end will"
-                f" be {bev.clip_length}\n"
+                f" be {bev.clip_end}\n"
             )
 
         else:
@@ -86,7 +88,7 @@ def main() -> None:
             print("               end timestamp can be relative, prefix with '+'")
             print(
                 f"               press enter to use given defaults "
-                f"({bev.clip_start}, +{bev.clip_length})\n"
+                f"({bev.clip_start}, {bev.clip_end})\n"
             )
 
         for song_path in tmpdir.rglob("*.*"):
@@ -97,17 +99,38 @@ def main() -> None:
             print(f"- {song_path.stem}")
 
             # generate query/info messages
-            _query_clip_end = f"clip end (+{bev.clip_length})"
+            _msg_format = "  - {}: "
+            _query_clip_end = f"clip end ({bev.clip_end})"
             _query_clip_start = f"clip start ({bev.clip_start})"
+            _query_new_filename = "filename"
             _info_clip_status = "status"
+            _info_notice = "notice"
+            _longest_msg_len = len(
+                max(
+                    [
+                        _query_new_filename,
+                        _query_clip_end,
+                        _query_clip_start,
+                        _info_clip_status,
+                        _info_notice,
+                    ]
+                )
+            )
 
-            query_clip_end = "  - {}: ".format(_query_clip_end)
-            query_clip_start = "  - {}: ".format(
-                _query_clip_start.rjust(len(_query_clip_end)),
+            query_clip_end = _msg_format.format(
+                _query_clip_end.rjust(_longest_msg_len),
             )
-            info_clip_status = "  - {}: ".format(
-                _info_clip_status.rjust(len(_query_clip_end)),
+            query_clip_start = _msg_format.format(
+                _query_clip_start.rjust(_longest_msg_len),
             )
+            query_new_filename = _query_new_filename.format(
+                _query_new_filename.rjust(_longest_msg_len),
+            )
+            info_clip_status = _msg_format.format(
+                _info_clip_status.rjust(_longest_msg_len),
+            )
+            info_notice = _msg_format.format(_info_notice.rjust(_longest_msg_len))
+            indent = len(_msg_format) - 2 + _longest_msg_len
 
             _msg = f"{info_clip_status}probe song duration"
             print(_msg, end="\r")
@@ -131,8 +154,14 @@ def main() -> None:
             print(" " * len(_msg), end="\r")
 
             # get timestamps
-            start_timestamp = 0
-            end_timestamp: int = start_timestamp + bev.clip_length
+            _end_timestamp = parse_timestamp(bev.clip_end)
+            if _end_timestamp is None:
+                # this should not even happen, but is here for type checking
+                print("pymtheg: error: unreachable (invalid end timestamp)")
+                exit(1)
+
+            start_timestamp = bev.clip_start
+            end_timestamp: int = start_timestamp + _end_timestamp
 
             if not bev.use_defaults:
                 # starting timestamp
@@ -145,21 +174,21 @@ def main() -> None:
                         if _start_timestamp is None:
                             # invalid format
                             print(
-                                (" " * len(query_clip_start)) + ("^" * len(response)),
+                                (" " * indent) + ("^" * len(response)),
                                 "invalid timestamp",
                             )
 
                         elif _start_timestamp >= song_duration:
                             # invalid, timestamp >= song duration
                             print(
-                                (" " * len(query_clip_start)) + ("^" * len(response)),
+                                (" " * indent) + ("^" * len(response)),
                                 "timestamp exceeds song duration",
                             )
 
                         else:
                             # valid, continue
                             start_timestamp = _start_timestamp
-                            end_timestamp = _start_timestamp + bev.clip_length
+                            end_timestamp = _start_timestamp + _end_timestamp
                             break
 
                     elif response == "":
@@ -170,13 +199,15 @@ def main() -> None:
                     response = input(query_clip_end)
                     if response != "":
                         _end_timestamp = parse_timestamp(
-                            response, relative_to=start_timestamp
+                            response,
+                            relative_to=start_timestamp,
+                            song_duration=song_duration,
                         )
 
                         if _end_timestamp is None:
                             # reprompt if invalid
                             print(
-                                (" " * len(query_clip_end)) + ("^" * len(response)),
+                                (" " * indent) + ("^" * len(response)),
                                 "invalid timestamp",
                             )
 
@@ -196,6 +227,35 @@ def main() -> None:
 
             if bev.out is not None:
                 out_path = bev.out
+
+            elif (
+                # no -o specified and out_path exists
+                out_path.exists() and bev.yes is False
+            ):
+                print(f"{info_notice}'{out_path.name}' exists in output dir.")
+                overwrite_response = input(
+                    f"{' ' * indent}overwrite? ([y]es/[no]/[c]hange) "
+                ).lower()
+
+                if overwrite_response == "y":
+                    pass
+
+                elif overwrite_response == "c":
+                    while True:
+                        new_filename_response = input(query_new_filename)
+                        new_out_path = Path(new_filename_response)
+                        if new_out_path.exists():
+                            print(
+                                (" " * indent) + ("^" * len(new_filename_response)),
+                                "file already exists",
+                            )
+                        else:
+                            out_path = new_out_path
+                            break
+
+                else:
+                    print(f"{info_notice}skipping song")
+                    continue
 
             # clip audio
             _msg = f"{info_clip_status}clip audio"
@@ -219,24 +279,28 @@ def main() -> None:
 
             print(" " * len(_msg), end="\r")
 
-            # get album art
-            _msg = f"{info_clip_status}getting album art"
-            print(_msg, end="\r")
+            # get album art if needed
+            if bev.image is None:  # no custom image was specified
+                _msg = f"{info_clip_status}getting album art"
+                print(_msg, end="\r")
 
-            invocate(
-                "ffmpeg",
-                args=[
-                    "-i",
-                    song_path,
-                    "-an",
-                    song_cover_path,
-                ],
-                cwd=tmpdir,
-                errcode=3,
-                capture_output=True,
-            )
+                invocate(
+                    "ffmpeg",
+                    args=[
+                        "-i",
+                        song_path,
+                        "-an",
+                        song_cover_path,
+                    ],
+                    cwd=tmpdir,
+                    errcode=3,
+                    capture_output=True,
+                )
 
-            print(" " * len(_msg), end="\r")
+                print(" " * len(_msg), end="\r")
+            
+            else:
+                song_cover_path = bev.image
 
             # create clip
             print(f"{info_clip_status}creating clip")  # no \r because ffmpeg output
@@ -281,19 +345,25 @@ def part_of_day():
     )
 
 
-def parse_timestamp(ts: str, relative_to: Optional[int] = None) -> Optional[int]:
+def parse_timestamp(
+    ts: str,
+    relative_to: Optional[int] = None,
+    song_duration: Optional[int] = None,
+) -> Optional[int]:
     """
     parse user-submitted timestamp
 
     ts: str
         timestamp following [hh:mm:]ss format (e.g. 2:49, 5:18:18)
-    relative_to: Optional[int] = 0
-        used for relative end timestamps; -1 == relative_to; +n == (relative_to + ts)
+    relative_to: Optional[int] = None
+        used for relative end timestamps
+    song_duration: Optional[int] = None
+        used for the -1 relative end timestamp
     """
     timestamp = 0
 
-    if ts.startswith("-") and relative_to is not None:
-        return relative_to
+    if ts == "-1" and song_duration is not None:
+        return song_duration
 
     elif ts.startswith("+") and relative_to is not None:
         ts = ts[1:]
@@ -399,7 +469,7 @@ def get_args() -> Behaviour:
         description=(
             "a python script to share songs from Spotify/YouTube as a 15 second clip"
         ),
-        epilog=f"ffargs default: '{FFARGS}'",
+        epilog=f'ffargs default: "{FFARGS}"',
     )
 
     parser.add_argument("query", help="song/link from spotify/youtube")
@@ -423,18 +493,21 @@ def get_args() -> Behaviour:
     parser.add_argument(
         "-cs",
         "--clip-start",
-        help="clip start (default 0)",
+        help="specify clip start (default 0)",
         dest="clip_start",
         type=int,
         default=0,
     )
     parser.add_argument(
-        "-cl",
-        "--clip-length",
-        help="length of output clip in seconds (default 15)",
-        dest="clip_length",
-        type=int,
-        default=15,
+        "-ce",
+        "--clip-end",
+        help="specify clip end (default +15)",
+        dest="clip_end",
+        type=str,
+        default="+15",
+    )
+    parser.add_argument(
+        "-i", "--image", help="specify custom image", type=Path, default=None
     )
     parser.add_argument(
         "-ud",
@@ -444,8 +517,27 @@ def get_args() -> Behaviour:
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "-y",
+        "--yes",
+        help="say yes to every y/n prompt",
+        action="store_true",
+        default=False,
+    )
 
     args = parser.parse_args()
+
+    # validate (1)
+    end_timestamp = parse_timestamp(
+        # use dumb values, because who knows if somebody sets it to -1
+        args.clip_end,
+        relative_to=0,
+        song_duration=0,
+    )
+    if end_timestamp is None:
+        print("pymtheg: error: invalid timestamp")
+        exit(1)
+
     bev = Behaviour(
         query=args.query,
         dir=args.dir,
@@ -453,17 +545,19 @@ def get_args() -> Behaviour:
         sdargs=args.sdargs.split(),
         ffargs=args.ffargs.split(),
         clip_start=args.clip_start,
-        clip_length=args.clip_length,
+        clip_end=args.clip_end,
+        image=args.image,
         use_defaults=args.use_defaults,
+        yes=args.yes,
     )
 
-    # validate:
+    # validate (2)
     if bev.out is not None:
         if bev.out.is_dir():
             print("pymtheg: error: output file is a directory")
             exit(1)
 
-        if bev.out.exists():
+        if bev.out.exists() and bev.yes is False:
             overwrite_response = input(
                 f"pymtheg: info: {bev.out} exists, overwrite? (y/n) "
             )
@@ -476,6 +570,10 @@ def get_args() -> Behaviour:
 
     if not bev.dir.is_dir():
         print("pymtheg: error: output directory is not a directory")
+        exit(1)
+
+    if bev.image is not None and not bev.image.exists():
+        print("pymtheg: error: specified image is non-existent")
         exit(1)
 
     return bev

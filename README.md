@@ -34,7 +34,7 @@ Poetry instead.
 ## Usage
 
 ```text
-usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] [-ffa FFARGS] [-cs CLIP_START] [-cl CLIP_LENGTH] [-ud] query
+usage: pymtheg [-h] [-d DIR] [-o OUT] [-sda SDARGS] [-ffa FFARGS] [-cs CLIP_START] [-ce CLIP_END] [-i IMAGE] [-ud] [-y] query
 
 a python script to share songs from Spotify/YouTube as a 15 second clip
 
@@ -50,13 +50,16 @@ options:
   -ffa FFARGS, --ffargs FFARGS
                         args to pass to ffmpeg for clip creation
   -cs CLIP_START, --clip-start CLIP_START
-                        clip start (default 0)
-  -cl CLIP_LENGTH, --clip-length CLIP_LENGTH
-                        length of output clip in seconds (default 15)
+                        specify clip start (default 0)
+  -ce CLIP_END, --clip-end CLIP_END
+                        specify clip end (default +15)
+  -i IMAGE, --image IMAGE
+                        specify custom image
   -ud, --use-defaults   use 0 as clip start and --clip-length as clip end
+  -y, --yes             say yes to every y/n prompt
 
-ffargs default: '-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p -tune stillimage -vf
-scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor''
+ffargs default: "-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p -tune stillimage -vf
+scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor'"
 ```
 
 ### Return Codes

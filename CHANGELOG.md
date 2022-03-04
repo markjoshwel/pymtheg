@@ -4,10 +4,13 @@
 
 Quality of use updates
 
-- status messages now have spinners
-- allow for timestamp re-querying through a confirmation prompt
+- change `-cl`, `--clip-length` to `-ce`, `--clip-end`, with default `+15
+- prompt user to confirm clip start and end after input
+- prompt user if file already exists (unless `-o` was used)
 - allow for relative timestamp of `-1` equal to song length
-- (breaking) change `-cl`, `--clip-length` to `-ce`, `--clip-end`, with default `+15`
+- added `-y`, `--yes` to agree to every y/n interaction
+- added `-i`, `--image` to specify custom image
+- status messages now have spinners (rich)
 
 ## 1.2.2
 
