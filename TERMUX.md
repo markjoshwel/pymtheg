@@ -54,7 +54,7 @@ This script will work if:
 
    Currently, only a certain version of rapidfuzz can be built on Android.
    ([maxbachmann/RapidFuzz#195](https://github.com/maxbachmann/RapidFuzz/issues/195))
-   
+
    This will take some time to build, so hold the wakelock and enjoy a cup.
 
    ```text
