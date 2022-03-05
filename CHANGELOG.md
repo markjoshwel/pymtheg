@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.1
+
+Bug fixes
+
+- fixed a incorrectly placed newline
+- removed a 10s pause used in debugging
+- aligned statuses
+
 ## 2.0.0
 
 Quality of use updates

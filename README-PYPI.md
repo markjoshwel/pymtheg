@@ -6,6 +6,8 @@ A Python script to share songs from Spotify/YouTube as a 15 second clip.
 See the [repository](https://github.com/markjoshwel/pymtheg) for more installation and
 contribution instructions/information.
 
+![asciicast](https://asciinema.org/a/473914.svg)
+
 ## Usage
 
 ```text
@@ -33,8 +35,7 @@ options:
   -ud, --use-defaults   use 0 as clip start and --clip-length as clip end
   -y, --yes             say yes to every y/n prompt
 
-ffargs default: "-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p -tune stillimage -vf
-scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor'"
+ffargs default: "-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p -tune stillimage -vf scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor'"
 ```
 
 ## License

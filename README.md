@@ -10,7 +10,7 @@ use with Termux.
 
 See [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
 
-[![demo](https://asciinema.org/a/473157.svg)](https://asciinema.org/a/473157)
+![asciicast](https://asciinema.org/a/473914.svg)
 
 ## Installation
 
@@ -58,8 +58,7 @@ options:
   -ud, --use-defaults   use 0 as clip start and --clip-length as clip end
   -y, --yes             say yes to every y/n prompt
 
-ffargs default: "-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p -tune stillimage -vf
-scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor'"
+ffargs default: "-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p -tune stillimage -vf scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor'"
 ```
 
 ### Return Codes
