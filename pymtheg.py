@@ -39,11 +39,16 @@ from shutil import move
 from json import loads
 import subprocess
 
+from rich.console import Console
+
 
 FFARGS: str = (
     "-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p "
     "-tune stillimage -vf scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor'"
 )
+
+premsg_info = "[dim]pymtheg: [/dim][bold cyan]info[/bold cyan][dim]:[/]"
+premsg_error = "[dim]pymtheg: [/dim][bold red]error[/bold red][dim]:[/]"
 
 
 class EndTimestamp(NamedTuple):
@@ -84,52 +89,69 @@ def main() -> None:
     """
     pymtheg entry point
     """
-    bev = get_args()
+    console = Console()
+    bev = get_args(console)
 
     # make tempdir
     with TemporaryDirectory() as _tmpdir:
         tmpdir = Path(_tmpdir)
 
         # download songs
-        invocate(name="spotdl", args=[bev.query] + bev.sdargs, cwd=tmpdir, errcode=2)
+        with console.status(f"[dim]downloading songs...[/]", spinner="arc"):
+            spotdl_proc = invocate(
+                console=console,
+                name="spotdl",
+                args=[bev.query] + bev.sdargs,
+                cwd=tmpdir,
+                errcode=2,
+                capture_output=True,
+            )
 
         # process songs
-        if bev.use_defaults:
-            print(
-                "\npymtheg: info: using defaults, clip start will be 0 and clip end will"
-                f" be {bev.clip_end}\n"
-            )
-
-        else:
-            print("\npymtheg: info: enter timestamps in format [hh:mm:]ss")
-            print("               end timestamp can be relative, prefix with '+'")
-            print(
-                f"               press enter to use given defaults "
-                f"({bev.clip_start}, {bev.clip_end})\n"
-            )
+        processed = 0
 
         for song_path in tmpdir.rglob("*.*"):
             # ensure that file was export of spotDL (list from spotdl -h)
             if song_path.suffix not in [".m4a", ".ogg", ".flac", ".mp3", ".wav", ".opus"]:
                 continue
 
-            print(f"- {song_path.stem}")
+            if processed == 0:
+                # print timestamp format/using default message on first song
+                if bev.use_defaults:
+                    console.print(
+                        f"{premsg_info} using defaults, clip start will be 0 and clip end will"
+                        f" be {bev.clip_end}\n"
+                    )
+
+                else:
+                    console.print(f"{premsg_info} enter timestamps in format [hh:mm:]ss")
+                    console.print(
+                        "               end timestamp can be relative, prefix with '+'"
+                    )
+                    console.print(
+                        f"               press enter to use given defaults\n"
+                        f"({bev.clip_start}, {bev.clip_end})"
+                    )
+
+            console.print(f"- [bold]{song_path.stem}[/]")
 
             # generate query/info messages
-            _msg_format = "  - {}: "
+            _msg_format = "    {}: "
             _query_clip_end = f"clip end ({bev.clip_end})"
             _query_clip_start = f"clip start ({bev.clip_start})"
             _query_new_filename = "filename"
-            _info_clip_status = "status"
+            _info_status = "status"
             _info_notice = "notice"
-            _longest_msg_len = len(max(
-                _query_new_filename,
-                _query_clip_end,
-                _query_clip_start,
-                _info_clip_status,
-                _info_notice,
-                key=len,
-            ))
+            _longest_msg_len = len(
+                max(
+                    _query_new_filename,
+                    _query_clip_end,
+                    _query_clip_start,
+                    _info_status,
+                    _info_notice,
+                    key=len,
+                )
+            )
 
             query_clip_end = _msg_format.format(
                 _query_clip_end.rjust(_longest_msg_len),
@@ -140,32 +162,34 @@ def main() -> None:
             query_new_filename = _msg_format.format(
                 _query_new_filename.rjust(_longest_msg_len),
             )
-            info_clip_status = _msg_format.format(
-                _info_clip_status.rjust(_longest_msg_len),
+            info_status = _msg_format.format(
+                _info_status.rjust(_longest_msg_len),
             )
             info_notice = _msg_format.format(_info_notice.rjust(_longest_msg_len))
             indent = len(_msg_format) - 2 + _longest_msg_len
 
-            _msg = f"{info_clip_status}probe song duration"
-            print(_msg, end="\r")
-
             # duration retrieval
-            proc = invocate(
-                "ffprobe",
-                args=[
-                    "-print_format",
-                    "json",
-                    "-show_entries",
-                    "format=duration",
-                    song_path,
-                ],
-                capture_output=True,
-            )
-            song_duration: int = int(
-                loads(proc.stdout)["format"]["duration"].split(".")[0]
-            )
+            with console.status(
+                f"[dim]{info_status}probe song duration[/]", spinner="arc"
+            ):
+                proc = invocate(
+                    console=console,
+                    name="ffprobe",
+                    args=[
+                        "-print_format",
+                        "json",
+                        "-show_entries",
+                        "format=duration",
+                        song_path,
+                    ],
+                    capture_output=True,
+                )
+                song_duration: int = int(
+                    loads(proc.stdout)["format"]["duration"].split(".")[0]
+                )
+                from time import sleep
 
-            print(" " * len(_msg), end="\r")
+                sleep(10)
 
             # construct paths
             song_path = song_path.absolute()
@@ -182,7 +206,7 @@ def main() -> None:
                 out_path.exists()
                 and bev.yes is False
             ):
-                print(f"{info_notice}'{out_path.name}' exists in output dir.")
+                console.print(f"{info_notice}'{out_path.name}' exists in output dir.")
                 overwrite_response = input(
                     f"{' ' * indent}overwrite? ([y]es/[n]o/[c]hange) "
                 ).lower()
@@ -195,7 +219,7 @@ def main() -> None:
                         new_filename_response = input(query_new_filename)
                         new_out_path = Path(new_filename_response)
                         if new_out_path.exists():
-                            print(
+                            console.print(
                                 (" " * indent) + ("^" * len(new_filename_response)),
                                 "file already exists",
                             )
@@ -204,7 +228,7 @@ def main() -> None:
                             break
 
                 else:
-                    print(f"{info_notice}skipping song")
+                    console.print(f"{info_notice}skipping song")
                     continue
 
             # get timestamps
@@ -213,7 +237,7 @@ def main() -> None:
 
             if bev.clip_end.relative:
                 end_timestamp += start_timestamp
-            
+
             if end_timestamp == -1:
                 end_timestamp = song_duration
 
@@ -221,22 +245,22 @@ def main() -> None:
                 while True:
                     # starting timestamp
                     while True:
-                        response = input(query_clip_start)
+                        cs_response = input(query_clip_start)
 
-                        if response != "":
-                            _start_timestamp = parse_timestamp(response)
+                        if cs_response != "":
+                            _start_timestamp = parse_timestamp(cs_response)
 
                             if _start_timestamp is None:
                                 # invalid format
-                                print(
-                                    (" " * indent) + ("^" * len(response)),
+                                console.print(
+                                    (" " * indent) + ("^" * len(cs_response)),
                                     "invalid timestamp",
                                 )
 
                             elif _start_timestamp >= song_duration:
                                 # invalid, timestamp >= song duration
-                                print(
-                                    (" " * indent) + ("^" * len(response)),
+                                console.print(
+                                    (" " * indent) + ("^" * len(cs_response)),
                                     "timestamp exceeds song duration",
                                 )
 
@@ -248,23 +272,23 @@ def main() -> None:
                                 start_timestamp = _start_timestamp
                                 break
 
-                        elif response == "":
+                        elif cs_response == "":
                             break
 
                     # ending timestamp
                     while True:
-                        response = input(query_clip_end)
-                        if response != "":
+                        ce_response = input(query_clip_end)
+                        if ce_response != "":
                             _end_timestamp = parse_timestamp(
-                                response,
+                                ce_response,
                                 relative_to=start_timestamp,
                                 song_duration=song_duration,
                             )
 
                             if _end_timestamp is None:
                                 # reprompt if invalid
-                                print(
-                                    (" " * indent) + ("^" * len(response)),
+                                console.print(
+                                    (" " * indent) + ("^" * len(ce_response)),
                                     "invalid timestamp",
                                 )
 
@@ -272,90 +296,103 @@ def main() -> None:
                                 end_timestamp = _end_timestamp
                                 break
 
-                        elif response == "":
+                        elif ce_response == "":
                             break
 
                     # confirm timestamps
                     if bev.yes:
                         break
 
-                    confirmation_response = input(
-                        f"{info_notice}confirm timestamps? (y/n): "
-                    ).lower()
-                    if confirmation_response == "y":
-                        break
+                    # dont prompt confirmation if defaults were used
+                    if not (cs_response == "" and ce_response == ""):
+                        confirmation_response = input(
+                            f"{info_notice}confirm timestamps? (y/n): "
+                        ).lower()
 
-                    else:
-                        pass
+                        if confirmation_response == "y":
+                            break
+
+                        else:
+                            pass
 
             # clip audio
-            _msg = f"{info_clip_status}clip audio"
-            print(_msg, end="\r")
-
-            invocate(
-                "ffmpeg",
-                args=[
-                    "-ss",
-                    str(start_timestamp),
-                    "-to",
-                    str(end_timestamp),
-                    "-i",
-                    song_path,
-                    song_clip_path,
-                ],
-                cwd=tmpdir,
-                errcode=3,
-                capture_output=True,
-            )
-
-            print(" " * len(_msg), end="\r")
-
-            # get album art if needed
-            if bev.image is None:  # no custom image was specified
-                _msg = f"{info_clip_status}getting album art"
-                print(_msg, end="\r")
-
+            with console.status(f"[dim]{info_status}clip audio[/]", spinner="arc"):
                 invocate(
-                    "ffmpeg",
+                    console=console,
+                    name="ffmpeg",
                     args=[
+                        "-ss",
+                        str(start_timestamp),
+                        "-to",
+                        str(end_timestamp),
                         "-i",
                         song_path,
-                        "-an",
-                        song_cover_path,
+                        song_clip_path,
                     ],
                     cwd=tmpdir,
                     errcode=3,
                     capture_output=True,
                 )
 
-                print(" " * len(_msg), end="\r")
+            # get album art if needed
+            if bev.image is None:  # no custom image was specified
+                with console.status(f"[dim]{info_status}get album art[/]", spinner="arc"):
+                    invocate(
+                        console=console,
+                        name="ffmpeg",
+                        args=[
+                            "-i",
+                            song_path,
+                            "-an",
+                            song_cover_path,
+                        ],
+                        cwd=tmpdir,
+                        errcode=3,
+                        capture_output=True,
+                    )
 
             else:
                 song_cover_path = bev.image
 
             # create clip
-            print(f"{info_clip_status}creating clip")  # no \r because ffmpeg output
+            with console.status(f"[dim]{info_status}create clip[/]", spinner="arc"):
+                invocate(
+                    console=console,
+                    name="ffmpeg",
+                    args=[
+                        "-loop",
+                        "1",
+                        "-i",
+                        song_cover_path,
+                        "-i",
+                        song_clip_path,
+                        "-t",
+                        str(end_timestamp - start_timestamp),
+                        *bev.ffargs,
+                        video_clip_path,
+                    ],
+                    errcode=3,
+                )
 
-            invocate(
-                "ffmpeg",
-                args=[
-                    "-loop",
-                    "1",
-                    "-i",
-                    song_cover_path,
-                    "-i",
-                    song_clip_path,
-                    "-t",
-                    str(end_timestamp - start_timestamp),
-                    *bev.ffargs,
-                    video_clip_path,
-                ],
-                errcode=3,
-            )
+                move(video_clip_path, out_path)
 
-            move(video_clip_path, out_path)
+            processed += 1
 
-    print(f"\npymtheg: info: all operations successful. have a great {part_of_day()}.")
+    if processed > 0:
+        console.print(
+            f"\n{premsg_info} all operations successful. have a great {part_of_day()}."
+        )
+
+    else:
+        if spotdl_proc.stdout != "":
+            console.print(f"\n{premsg_error} invocation stdout:\n{spotdl_proc.stdout}")
+        if spotdl_proc.stderr != "":
+            console.print(f"\n{premsg_error} invocation stderr:\n{spotdl_proc.stderr}")
+
+        console.print(
+            f"{premsg_error} invalid link/query, nothing to do. (see above for more information)"
+        )
+        exit(1)
 
 
 def part_of_day():
@@ -421,6 +458,7 @@ def parse_timestamp(
 
 
 def invocate(
+    console: Console,
     name: str,
     args: Iterable[Optional[Union[str, Path]]] = [],
     cwd: Optional[Path] = None,
@@ -459,12 +497,12 @@ def invocate(
         if proc.returncode != 0:
             if capture_output:
                 if proc.stdout != "":
-                    print(f"\npymtheg: error: invocation stdout:\n{proc.stdout}")
+                    console.print(f"\n{premsg_error} invocation stdout:\n{proc.stdout}")
                 if proc.stderr != "":
-                    print(f"\npymtheg: error: invocation stderr:\n{proc.stderr}")
+                    console.print(f"\n{premsg_error} invocation stderr:\n{proc.stderr}")
 
-            print(
-                "\npymtheg: error: error during invocation of "
+            console.print(
+                f"\n{premsg_error} error during invocation of "
                 f"'{' '.join([str(p) for p in invocation])}', returned non-zero exit "
                 f"code {proc.returncode}, see above for details"
             )
@@ -472,17 +510,17 @@ def invocate(
 
     except FileNotFoundError as err:
         print_tb(err.__traceback__)
-        print(
+        console.print(
             f"{err.__class__.__name__}: {err}\n\n"
-            f"pymtheg: error: could not invocate {name}, see traceback"
+            f"{premsg_error} could not invocate {name}, see traceback"
         )
         exit(errcode)
 
     except Exception as err:
         print_tb(err.__traceback__)
-        print(
+        console.print(
             f"{err.__class__.__name__}: {err}\n\n"
-            f"pymtheg: error: unknown error during invocation of {name}, see traceback"
+            f"{premsg_error} unknown error during invocation of {name}, see traceback"
         )
         exit(errcode)
 
@@ -490,7 +528,7 @@ def invocate(
         return proc
 
 
-def get_args() -> Behaviour:
+def get_args(console: Console) -> Behaviour:
     """
     parse and validate arguments
     """
@@ -566,7 +604,10 @@ def get_args() -> Behaviour:
         song_duration=-1,
     )
     if end_timestamp is None:
-        print("pymtheg: error: invalid clip end (format: [hh:mm:]ss), prefix with '+' for relative timestamp")
+        console.print(
+            f"{premsg_error} invalid clip end (format: [hh:mm:]ss), "
+            "prefix with '+' for relative timestamp"
+        )
         exit(1)
 
     bev = Behaviour(
@@ -587,26 +628,26 @@ def get_args() -> Behaviour:
     # validate (2)
     if bev.out is not None:
         if bev.out.is_dir():
-            print("pymtheg: error: output file is a directory")
+            console.print(f"{premsg_error} output file is a directory")
             exit(1)
 
         if bev.out.exists() and bev.yes is False:
-            overwrite_response = input(
-                f"pymtheg: info: {bev.out} exists, overwrite? (y/n) "
+            overwrite_response = console.input(
+                f"{premsg_info} {bev.out} exists, overwrite? (y/n) "
             )
             if overwrite_response.lower() != "y":
                 exit(1)
 
     if not bev.dir.exists():
-        print("pymtheg: error: output directory is non-existent")
+        console.print(f"{premsg_error} output directory is non-existent")
         exit(1)
 
     if not bev.dir.is_dir():
-        print("pymtheg: error: output directory is not a directory")
+        console.print(f"{premsg_error} output directory is not a directory")
         exit(1)
 
     if bev.image is not None and not bev.image.exists():
-        print("pymtheg: error: specified image is non-existent")
+        console.print(f"{premsg_error} specified image is non-existent")
         exit(1)
 
     return bev
