@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2
+
+- fix asciinema link in README
+
 ## 2.0.1
 
 Bug fixes
