@@ -4,26 +4,23 @@ pymtheg: A Python script to share songs from Spotify/YouTube as a 15 second clip
 
 This is free and unencumbered software released into the public domain.
 
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
+-----------------------------------------------------------------------------------------
 
-In jurisdictions that recognize copyright laws, the author or authors
-of this software dedicate any and all copyright interest in the
-software to the public domain. We make this dedication for the benefit
-of the public at large and to the detriment of our heirs and
-successors. We intend this dedication to be an overt act of
-relinquishment in perpetuity of all present and future rights to this
-software under copyright law.
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software,
+either in source code form or as a compiled binary, for any purpose, commercial or
+non-commercial, and by any means.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
+In jurisdictions that recognize copyright laws, the author or authors of this software
+dedicate any and all copyright interest in the software to the public domain. We make
+this dedication for the benefit of the public at large and to the detriment of our heirs
+and successors. We intend this dedication to be an overt act of relinquishment in
+perpetuity of all present and future rights to this software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <http://unlicense.org/>
 """
@@ -119,8 +116,8 @@ def main() -> None:
                 # print timestamp format/using default message on first song
                 if bev.use_defaults:
                     console.print(
-                        f"{premsg_info} using defaults, clip start will be 0 and clip end will"
-                        f" be {bev.clip_end}\n"
+                        f"{premsg_info} using defaults, clip start will be 0 and clip "
+                        f" end will be {bev.clip_end}\n"
                     )
 
                 else:
@@ -129,8 +126,8 @@ def main() -> None:
                         "               end timestamp can be relative, prefix with '+'"
                     )
                     console.print(
-                        f"               press enter to use given defaults\n"
-                        f"({bev.clip_start}, {bev.clip_end})"
+                        f"               press enter to use given defaults "
+                        f"({bev.clip_start}, {bev.clip_end})\n"
                     )
 
             console.print(f"- [bold]{song_path.stem}[/]")
@@ -162,7 +159,7 @@ def main() -> None:
             query_new_filename = _msg_format.format(
                 _query_new_filename.rjust(_longest_msg_len),
             )
-            info_status = _msg_format.format(
+            info_status = _msg_format[2:].format(
                 _info_status.rjust(_longest_msg_len),
             )
             info_notice = _msg_format.format(_info_notice.rjust(_longest_msg_len))
@@ -187,9 +184,6 @@ def main() -> None:
                 song_duration: int = int(
                     loads(proc.stdout)["format"]["duration"].split(".")[0]
                 )
-                from time import sleep
-
-                sleep(10)
 
             # construct paths
             song_path = song_path.absolute()
@@ -314,6 +308,9 @@ def main() -> None:
 
                         else:
                             pass
+                    
+                    else:
+                        break
 
             # clip audio
             with console.status(f"[dim]{info_status}clip audio[/]", spinner="arc"):
