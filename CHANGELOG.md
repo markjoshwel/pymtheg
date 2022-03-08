@@ -1,6 +1,14 @@
 # Changelog
 
+## 2.1.0
+
+Quality of use update
+
+- Default timestamp confirmation prompt to `y`
+
 ## 2.0.2
+
+Packaging fixes
 
 - fix asciinema link in README
 

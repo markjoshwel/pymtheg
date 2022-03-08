@@ -300,15 +300,15 @@ def main() -> None:
                     # dont prompt confirmation if defaults were used
                     if not (cs_response == "" and ce_response == ""):
                         confirmation_response = input(
-                            f"{info_notice}confirm timestamps? (y/n): "
+                            f"{info_notice}confirm timestamps? [y/n] (y) "
                         ).lower()
 
-                        if confirmation_response == "y":
+                        if confirmation_response == "y" or confirmation_response == "":
                             break
 
                         else:
                             pass
-                    
+
                     else:
                         break
 
@@ -630,7 +630,7 @@ def get_args(console: Console) -> Behaviour:
 
         if bev.out.exists() and bev.yes is False:
             overwrite_response = console.input(
-                f"{premsg_info} {bev.out} exists, overwrite? (y/n) "
+                f"{premsg_info} {bev.out} exists, overwrite? [y/n] (n) "
             )
             if overwrite_response.lower() != "y":
                 exit(1)
