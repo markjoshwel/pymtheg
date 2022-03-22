@@ -121,7 +121,7 @@ def main() -> None:
                     )
 
                 else:
-                    console.print(f"{premsg_info} enter timestamps in format [hh:mm:]ss")
+                    console.print(f"{premsg_info} enter timestamps in format \[hh:mm:]ss")
                     console.print(
                         "               end timestamp can be relative, prefix with '+'"
                     )
@@ -223,7 +223,8 @@ def main() -> None:
 
                 else:
                     console.print(f"{info_notice}skipping song")
-                    continue
+                    processed += 1
+                    break
 
             # get timestamps
             start_timestamp = bev.clip_start
@@ -247,15 +248,19 @@ def main() -> None:
                             if _start_timestamp is None:
                                 # invalid format
                                 console.print(
-                                    (" " * indent) + ("^" * len(cs_response)),
-                                    "invalid timestamp",
+                                    "[dim][red]"
+                                    + (" " * indent)
+                                    + ("^" * len(cs_response))
+                                    + "[/dim][bold] invalid timestamp",
                                 )
 
                             elif _start_timestamp >= song_duration:
                                 # invalid, timestamp >= song duration
                                 console.print(
-                                    (" " * indent) + ("^" * len(cs_response)),
-                                    "timestamp exceeds song duration",
+                                    "[dim][red]"
+                                    + (" " * indent)
+                                    + ("^" * len(cs_response))
+                                    + "[/dim][bold] timestamp exceeds song duration",
                                 )
 
                             else:

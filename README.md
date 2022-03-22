@@ -10,11 +10,12 @@ use with Termux.
 
 See [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
 
-[![asciicast](https://asciinema.org/a/473914.svg)](https://asciinema.org/a/473914)
+[![asciicast](https://asciinema.org/a/479627.svg)](https://asciinema.org/a/479627)
 
 ## Installation
 
-pymtheg requires Python 3.6.2 or later, and ffmpeg.
+pymtheg requires [Python 3.6.2](https://python.org/) or later, and
+[ffmpeg](https://ffmpeg.org/).
 
 ### From pip
 

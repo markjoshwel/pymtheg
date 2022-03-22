@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.2
+
+Quality of use update
+
+- Fixed text formatting issues when displaying `[hh:mm:]ss`
+- Fix "invalid link/query, nothing to do" when having a non-standard answer for overwrite prompt
+
 ## 2.1.0
 
 Quality of use update
