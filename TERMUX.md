@@ -13,7 +13,7 @@
   [Google Play](https://play.google.com/store/apps/details?id=com.termux.api)
 
 Ensure that Termux has the permission to draw over other apps before proceeding. This
-will allow URLs to be shared with Termux.
+will allow the Termux URL Opener to properly function.
 
 ## Setup
 
@@ -27,7 +27,15 @@ Run the following command in the terminal:
 curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-setup | sh
 ```
 
-This script will work if:
+Once done, grant Termux access to your internal storage using the following command:
+
+```text
+termux-setup-storage
+```
+
+Done!
+
+Note: This script will work if:
 
 - Your Termux installation is fresh, or
 - You do not have a folder named `storage` in your home directory and have no
