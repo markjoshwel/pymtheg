@@ -6,7 +6,7 @@ A Python script to share songs from Spotify/YouTube as a 15 second clip.
 See the [repository](https://github.com/markjoshwel/pymtheg) for more installation and
 contribution instructions/information.
 
-[![asciicast](https://asciinema.org/a/479627.svg)](https://asciinema.org/a/479627)
+[![asciicast](https://asciinema.org/a/483803.svg)](https://asciinema.org/a/483803)
 
 ## Installation
 

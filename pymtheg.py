@@ -25,12 +25,14 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
 For more information, please refer to <http://unlicense.org/>
 """
 
+from re import M
 from typing import Iterable, List, NamedTuple, Optional, Type, Union
 
 from tempfile import TemporaryDirectory
 from argparse import ArgumentParser
 from traceback import print_tb
 from datetime import datetime
+from random import randint
 from pathlib import Path
 from shutil import move
 from json import loads
@@ -122,6 +124,7 @@ def main() -> None:
 
                 else:
                     console.print(f"{premsg_info} enter timestamps in format \[hh:mm:]ss")
+                    console.print("               timestamp can be '*' for random")
                     console.print(
                         "               end timestamp can be relative, prefix with '+'"
                     )
@@ -243,7 +246,9 @@ def main() -> None:
                         cs_response = input(query_clip_start)
 
                         if cs_response != "":
-                            _start_timestamp = parse_timestamp(cs_response)
+                            _start_timestamp = parse_timestamp(
+                                cs_response, song_duration=song_duration
+                            )
 
                             if _start_timestamp is None:
                                 # invalid format
@@ -302,10 +307,21 @@ def main() -> None:
                     if bev.yes:
                         break
 
-                    # dont prompt confirmation if defaults were used
-                    if not (cs_response == "" and ce_response == ""):
+                    # dont prompt confirmation if defaults/random were used
+                    if not (
+                        (cs_response == "" and ce_response == "")
+                        # or (cs_response == "*" and ce_response == "*")
+                    ):
+                        console.print(
+                            "{premsg}clip duration: {start} -> {end} ({duration}s)".format(
+                                premsg=info_notice,
+                                start=to_timestamp(start_timestamp),
+                                end=to_timestamp(end_timestamp),
+                                duration=end_timestamp - start_timestamp,
+                            )
+                        )
                         confirmation_response = input(
-                            f"{info_notice}confirm timestamps? [y/n] (y) "
+                            f"{' ' * indent}confirm? [y/n] (y) "
                         ).lower()
 
                         if confirmation_response == "y" or confirmation_response == "":
@@ -417,22 +433,25 @@ def part_of_day():
 
 def parse_timestamp(
     ts: str,
+    song_duration: int,
     relative_to: Optional[int] = None,
-    song_duration: Optional[int] = None,
 ) -> Optional[int]:
     """
     parse user-submitted timestamp
 
     ts: str
         timestamp following [hh:mm:]ss format (e.g. 2:49, 5:18:18)
+    song_duration: int
+        used for the -1 relative end timestamp or random timestamps
     relative_to: Optional[int] = None
-        used for relative end timestamps
-    song_duration: Optional[int] = None
-        used for the -1 relative end timestamp
+        used for relative end or random timestamps
     """
     timestamp = 0
 
-    if ts == "-1" and song_duration is not None:
+    if ts == "*":
+        return randint(0 if relative_to is None else relative_to + 1, song_duration)
+
+    elif ts == "-1" and song_duration is not None:
         return song_duration
 
     elif ts.startswith("+") and relative_to is not None:
@@ -457,6 +476,16 @@ def parse_timestamp(
 
     else:
         return None
+
+
+def to_timestamp(timestamp: int) -> str:
+    """returns a [hh:mm:]ss timestamp string from `timestamp: int`"""
+    _mm = timestamp // 60
+    hh = _mm // 60
+    mm = _mm - hh * 60
+    ss = timestamp % 60
+
+    return ":".join([str(unit) for unit in (hh, mm) if unit != 0] + [str(ss)])
 
 
 def invocate(
@@ -566,8 +595,8 @@ def get_args(console: Console) -> Behaviour:
         "--clip-start",
         help="specify clip start (default 0)",
         dest="clip_start",
-        type=int,
-        default=0,
+        type=str,
+        default="0",
     )
     parser.add_argument(
         "-ce",
