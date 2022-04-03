@@ -15,9 +15,11 @@ jobs:
           pip install poetry
           poetry install
       - name: test normal
-        run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y 
-      - name: test random
-        run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y -cs "*"
+        run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y
       - name: test mixed
-        run: poetry run pymtheg "https://www.youtube.com/watch?v=B9q7rtCad_Q|https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y          
+        run: poetry run pymtheg "https://www.youtube.com/watch?v=B9q7rtCad_Q|https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y
+      - name: test random
+        run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y -cs "*" -ce "*"
+      - name: test end -1
+        run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y -ce "-1"
       - run: echo "done"
