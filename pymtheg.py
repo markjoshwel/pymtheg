@@ -60,11 +60,11 @@ class EndTimestamp(NamedTuple):
         is ss relative to clip start?
     """
 
-    ss: int
+    ts: str
     relative: bool = False
 
     def __str__(self):
-        return ("+" if self.relative else "") + str(self.ss)
+        return self.ts
 
 
 class Behaviour(NamedTuple):
@@ -234,7 +234,8 @@ def main() -> None:
                 ts=bev.clip_start, song_duration=song_duration
             )
             assert isinstance(start_timestamp, int)
-            end_timestamp: int = bev.clip_end.ss
+            end_timestamp = parse_timestamp(ts=bev.clip_end.ts, song_duration=song_duration, relative_to=start_timestamp)
+            assert isinstance(end_timestamp, int)
 
             if bev.clip_end.relative:
                 end_timestamp += start_timestamp
@@ -452,6 +453,9 @@ def parse_timestamp(
     timestamp = 0
 
     if ts == "*":
+        if song_duration == -1:
+            return -1
+
         return randint(0 if relative_to is None else relative_to + 1, song_duration)
 
     elif ts == "-1" and song_duration is not None:
@@ -656,7 +660,7 @@ def get_args(console: Console) -> Behaviour:
         ffargs=args.ffargs.split(),
         clip_start=args.clip_start,
         clip_end=EndTimestamp(
-            end_timestamp, relative=True if args.clip_end.startswith("+") else False
+            args.clip_end, relative=True if args.clip_end.startswith("+") else False
         ),
         image=args.image,
         use_defaults=args.use_defaults,
