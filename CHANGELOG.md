@@ -4,7 +4,7 @@
 
 Quality of use update
 
-- allow for start timestamp to be "*", where a random timestamp wil be chosen
+- allow for start timestamp to be "*", where a random timestamp will be chosen
 - show real timestamps during confirmation (e.g. "0:00 -> 0:15")
 - bumped down minimum python dependency to 3.6.1
 
