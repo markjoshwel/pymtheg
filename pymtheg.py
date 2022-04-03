@@ -77,7 +77,7 @@ class Behaviour(NamedTuple):
     out: Optional[Path]
     sdargs: List[str]
     ffargs: List[str]
-    clip_start: int
+    clip_start: str
     clip_end: EndTimestamp
     image: Optional[Path]
     use_defaults: bool
@@ -118,7 +118,7 @@ def main() -> None:
                 # print timestamp format/using default message on first song
                 if bev.use_defaults:
                     console.print(
-                        f"{premsg_info} using defaults, clip start will be 0 and clip "
+                        f"{premsg_info} using defaults, clip start will be {bev.clip_start} and clip "
                         f" end will be {bev.clip_end}\n"
                     )
 
@@ -230,7 +230,10 @@ def main() -> None:
                     break
 
             # get timestamps
-            start_timestamp = bev.clip_start
+            start_timestamp = parse_timestamp(
+                ts=bev.clip_start, song_duration=song_duration
+            )
+            assert isinstance(start_timestamp, int)
             end_timestamp: int = bev.clip_end.ss
 
             if bev.clip_end.relative:
@@ -310,7 +313,7 @@ def main() -> None:
                     # dont prompt confirmation if defaults/random were used
                     if not (
                         (cs_response == "" and ce_response == "")
-                        # or (cs_response == "*" and ce_response == "*")
+                        or (cs_response == "*" and ce_response == "*")
                     ):
                         console.print(
                             "{premsg}clip duration: {start} -> {end} ({duration}s)".format(
@@ -628,11 +631,15 @@ def get_args(console: Console) -> Behaviour:
     args = parser.parse_args()
 
     # validate (1)
+    if args.clip_start != "*" and parse_timestamp(args.clip_start, -1) is None:
+        console.print(f"{premsg_error} invalid clip start (format: [hh:mm:]ss)")
+        exit(1)
+
     end_timestamp = parse_timestamp(
         # use dumb values, because who knows if somebody sets it to -1
         args.clip_end,
-        relative_to=0,
         song_duration=-1,
+        relative_to=0,
     )
     if end_timestamp is None:
         console.print(
