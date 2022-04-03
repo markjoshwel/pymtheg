@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'pymtheg.py'
 jobs:
   test-pymtheg:
     runs-on: ubuntu-latest
@@ -25,4 +27,3 @@ jobs:
         run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y -cs "*" -ce "*"
       - name: test end -1
         run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y -ce "-1"
-      - run: echo "done"
