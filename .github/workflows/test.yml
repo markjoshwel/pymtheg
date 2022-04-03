@@ -11,11 +11,14 @@ jobs:
         uses: actions/checkout@v3
       - name: install project (poetry)
         run: |
-          sudo apt-get install -y ffmpeg --fix-missing
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
           pip install poetry
           poetry install
       - name: test normal
         run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y
+      - name: test string
+        run: poetry run pymtheg "wake up mr west" -ud -y
       - name: test mixed
         run: poetry run pymtheg "https://www.youtube.com/watch?v=B9q7rtCad_Q|https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y
       - name: test random
