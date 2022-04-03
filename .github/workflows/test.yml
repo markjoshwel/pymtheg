@@ -1,0 +1,22 @@
+name: Test pymtheg
+on:
+  push:
+    branches:
+      - main
+jobs:
+  test-pymtheg:
+    runs-on: ubuntu-latest
+    steps:
+      - name: get repo
+        uses: actions/checkout@v3
+      - name: install project (poetry)
+        run: |
+          pip install poetry
+          poetry install
+      - name: test normal
+        run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y 
+      - name: test random
+        run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y -cs "*"
+      - name: test mixed
+        run: poetry run pymtheg "https://www.youtube.com/watch?v=B9q7rtCad_Q|https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y          
+      - run: echo "done"

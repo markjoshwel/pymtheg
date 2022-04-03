@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.2.0
+
+Quality of use update
+
+- allow for start timestamp to be "*", where a random timestamp wil be chosen
+- show real timestamps during confirmation (e.g. "0:00 -> 0:15")
+- bumped down minimum python dependency to 3.6.1
+
 ## 2.1.2
 
 Quality of use update

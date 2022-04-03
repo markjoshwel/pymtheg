@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pymtheg"
-version = "2.1.1"
+version = "2.2.0"
 description = "A Python script to share songs from Spotify/YouTube as a 15 second clip."
 authors = ["Your Name <you@example.com>"]
 packages = [
