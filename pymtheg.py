@@ -234,7 +234,11 @@ def main() -> None:
                 ts=bev.clip_start, song_duration=song_duration
             )
             assert isinstance(start_timestamp, int)
-            end_timestamp = parse_timestamp(ts=bev.clip_end.ts, song_duration=song_duration, relative_to=start_timestamp)
+            end_timestamp = parse_timestamp(
+                ts=bev.clip_end.ts,
+                song_duration=song_duration,
+                relative_to=start_timestamp,
+            )
             assert isinstance(end_timestamp, int)
 
             if bev.clip_end.relative:
