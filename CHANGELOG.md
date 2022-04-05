@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.3.0
+
+Changes to command line arguments
+
+- (possibly breaking) change behaviour of the `-o`, `--out` and `-d`, `--dir` arguments
+  - `-o`, `--out` now specifies output file name rather than output file path
+  - `-o`, `--out` and `-d`, `--dir` can be formatted
+  - `-o`, `--out` complements `-d`, `--dir` argument rather than overrides it
+
+- added `-e`, `--ext` to specify file extension
+
+See README or `pymtheg --help` for more information.
+
 ## 2.2.0
 
 Quality of use update

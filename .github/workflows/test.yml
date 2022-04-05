@@ -1,29 +1,40 @@
-name: Test pymtheg
+name: pymtheg.py Checks
 on:
   push:
-    branches:
-      - main
     paths:
       - 'pymtheg.py'
 jobs:
-  test-pymtheg:
+  Test:
     runs-on: ubuntu-latest
     steps:
-      - name: get repo
+      - name: Get Repository
         uses: actions/checkout@v3
-      - name: install project (poetry)
+      - name: Install Poetry Project + Project Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
           pip install poetry
           poetry install
-      - name: test normal
+      - name: Test normal
         run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y
-      - name: test string
+      - name: Test string
         run: poetry run pymtheg "wake up mr west" -ud -y
-      - name: test mixed
+      - name: Test mixed
         run: poetry run pymtheg "https://www.youtube.com/watch?v=B9q7rtCad_Q|https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y
-      - name: test random
+      - name: Test random
         run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y -cs "*" -ce "*"
-      - name: test end -1
+      - name: Test -1
         run: poetry run pymtheg "https://open.spotify.com/track/62KeM7jbmYvzT5FycdiQeS?si=7aad2351b8ba4500" -ud -y -ce "-1"
+  Analyse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Repository
+        uses: actions/checkout@v3
+      - name: Install Poetry Project
+        run: |
+          pip install poetry
+          poetry install
+      - name: Analyse using black
+        run: poetry run black --check pymtheg.py
+      - name: Analyse using mypy
+        run: poetry run mypy pymtheg.py
