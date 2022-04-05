@@ -2,14 +2,15 @@
 
 ## 2.3.0
 
-Changes to command line arguments
+Changes to command line arguments, quality of use updates
 
 - (possibly breaking) change behaviour of the `-o`, `--out` and `-d`, `--dir` arguments
   - `-o`, `--out` now specifies output file name rather than output file path
   - `-o`, `--out` and `-d`, `--dir` can be formatted
   - `-o`, `--out` complements `-d`, `--dir` argument rather than overrides it
-
-- added `-e`, `--ext` to specify file extension
+- added `-e`, `--ext` to specify clip file extension
+- added `-tf`, `--timestamp-format` to specify format of timestamp added to the end of clip path
+- add timestamp confirmation for both random timestamps
 
 See README or `pymtheg --help` for more information.
 

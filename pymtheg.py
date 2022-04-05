@@ -26,7 +26,7 @@ For more information, please refer to <http://unlicense.org/>
 """
 
 from re import M
-from typing import Iterable, List, NamedTuple, Optional, Union
+from typing import Iterable, List, NamedTuple, Optional, Tuple, Union
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 from tempfile import TemporaryDirectory
@@ -45,7 +45,8 @@ FFARGS: str = (
     "-hide_banner -loglevel error -c:a aac -c:v libx264 -pix_fmt yuv420p "
     "-tune stillimage -vf scale='iw+mod(iw,2):ih+mod(ih,2):flags=neighbor'"
 )
-OUT: str = "{artists} - {title} ({cs}{cer})"
+OUT: str = "{artists} - {title}"
+TIMESTAMP_FORMAT: str = " ({cs}{cer})"
 
 premsg_info = "[dim]pymtheg: [/dim][bold cyan]info[/bold cyan][dim]:[/]"
 premsg_error = "[dim]pymtheg: [/dim][bold red]error[/bold red][dim]:[/]"
@@ -64,18 +65,17 @@ class EndTimestamp(NamedTuple):
     ts: str
     relative: bool = False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.ts
 
 
 class Behaviour(NamedTuple):
-    """
-    typed command line argument tuple
-    """
+    """typed command line argument tuple"""
 
-    query: str
+    queries: List[str]
     dir: Path
     out: str
+    timestamp_format: str
     ext: str
     sdargs: List[str]
     ffargs: List[str]
@@ -87,9 +87,7 @@ class Behaviour(NamedTuple):
 
 
 def main() -> None:
-    """
-    pymtheg entry point
-    """
+    """pymtheg entry point"""
     console = Console()
     bev = get_args(console)
 
@@ -102,7 +100,7 @@ def main() -> None:
             spotdl_proc = invocate(
                 console=console,
                 name="spotdl",
-                args=[bev.query, "--path-template", f"{bev.out}.{{ext}}"] + bev.sdargs,
+                args=bev.queries + ["--path-template", f"{bev.out}.{{ext}}"] + bev.sdargs,
                 cwd=tmpdir,
                 errcode=2,
                 capture_output=True,
@@ -282,11 +280,8 @@ def main() -> None:
                     if bev.yes:
                         break
 
-                    # dont prompt confirmation if defaults/random were used
-                    if not (
-                        (cs_response == "" and ce_response == "")
-                        or (cs_response == "*" and ce_response == "*")
-                    ):
+                    # dont prompt confirmation if defaults were used
+                    if not cs_response == "" and ce_response == "":
                         console.print(
                             "{premsg}clip duration: {start} -> {end} ({duration}s)".format(
                                 premsg=info_notice,
@@ -310,9 +305,10 @@ def main() -> None:
 
             # construct and confirm output path
             out_path: Path = bev.dir.joinpath(
-                "{name}.{ext}".format(
-                    name=outformat(
-                        string=song_path.stem,
+                "{name}{timestamp}.{ext}".format(
+                    name=song_path.stem,
+                    timestamp=tf_format(
+                        string=bev.timestamp_format,
                         clip_start=start_timestamp,
                         clip_end=end_timestamp,
                     ),
@@ -410,7 +406,7 @@ def main() -> None:
                     errcode=3,
                 )
 
-                move(video_clip_path, out_path)
+                move(str(video_clip_path), str(out_path))
 
             processed += 1
 
@@ -431,9 +427,8 @@ def main() -> None:
         exit(1)
 
 
-def part_of_day():
-    """
-    used to greet user goodbye
+def part_of_day() -> str:
+    """used to greet user goodbye
 
     call it bloat or whatever, i like it
     """
@@ -509,7 +504,7 @@ def to_timestamp(timestamp: int) -> str:
     return ":".join([str(unit) for unit in (hh, mm) if unit != 0] + [str(ss)])
 
 
-def outformat(string: str, clip_start: int, clip_end: int) -> str:
+def tf_format(string: str, clip_start: int, clip_end: int) -> str:
     """formats a string with clip information, returns result
 
     clip_start: int
@@ -518,7 +513,7 @@ def outformat(string: str, clip_start: int, clip_end: int) -> str:
         clip end in seconds
     """
 
-    def outtimeformat(ts: int) -> str:
+    def ts_format(ts: int) -> str:
         """nested function represent `ts: int` as [(h*)mm]ss, returns result"""
         _mm = ts // 60
         hh = _mm // 60
@@ -536,9 +531,9 @@ def outformat(string: str, clip_start: int, clip_end: int) -> str:
         return result
 
     replaceables = (
-        ("{cs}", outtimeformat(clip_start)),
+        ("{cs}", ts_format(clip_start)),
         ("{css}", clip_start),
-        ("{ce}", outtimeformat(clip_end)),
+        ("{ce}", ts_format(clip_end)),
         ("{ces}", clip_end),
         ("{cer}", f"+{clip_end - clip_start}"),
     )
@@ -629,9 +624,25 @@ def get_args(console: Console) -> Behaviour:
         description=(
             "a python script to share songs from Spotify/YouTube as a 15 second clip"
         ),
-        epilog=f'''argument defaults:
-  -f, --ffargs: "{FFARGS}"
-  -o, --out: "{OUT}"
+        epilog=f'''querying:
+  queries are passed onto spotdl, and thus must be any one of the following:
+    1. text
+      "<query>"
+      e.g. "thundercat - them changes"
+    2. spotify track/album url
+      "<url>"
+      e.g. "https://open.spotify.com/track/..."
+    3. youtube source + spotify metadata
+      "<youtube url>|<spotify url>"
+      e.g. "https://www.youtube.com/watch?v=...|https://open.spotify.com/track/..."
+
+argument defaults:
+  -f, --ffargs:
+    "{FFARGS}"
+  -o, --out:
+    "{OUT}"
+  -t, --timestamp-format:
+    {TIMESTAMP_FORMAT}
 
 formatting:
   available placeholders:
@@ -649,16 +660,21 @@ formatting:
       {{cer}}
         e.g. +15
     
-      note:
-        "[(h*)mm]ss" means that seconds and minutes will always be represented
-        as 2 digits and will be right adjusted with 0s if needed, however hours
-        can be represented by any number of characters, e.g. "1" or "12345"''',
+      notes:
+        1. pymtheg placeholders can only be used with `-tf, --timestamp-format`
+        2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
+           digits and will be right adjusted with 0s if needed, however hours
+           can be represented by any number of characters, e.g. "1" or "123456"''',
         formatter_class=RawTextHelpFormatter,
     )
 
-    parser.add_argument("query", help="song/link from spotify/youtube")
+    parser.add_argument("queries", help="song queries (see querying)", nargs="+")
     parser.add_argument(
-        "-d", "--dir", type=Path, help="directory to output to", default=""
+        "-d",
+        "--dir",
+        type=Path,
+        help="directory to output to, formattable (see formatting)",
+        default="",
     )
     parser.add_argument(
         "-o",
@@ -666,6 +682,13 @@ formatting:
         type=Path,
         help=f"output file name format, formattable (see formatting)",
         default=OUT,
+    )
+    parser.add_argument(
+        "-tf",
+        "--timestamp-format",
+        type=str,
+        help="timestamp format, formattable (see formatting)",
+        default=TIMESTAMP_FORMAT,
     )
     parser.add_argument(
         "-e",
@@ -736,10 +759,43 @@ formatting:
         )
         exit(1)
 
+    # validate formattables to make sure they dont contain illegal placeholders
+    spotdl_replaceables = (
+        "{artist}",
+        "{artists}",
+        "{title}",
+        "{album}",
+        "{playlist}",
+    )
+    for placeholder in spotdl_replaceables:
+        if placeholder in args.timestamp_format:
+            console.print(
+                f"{premsg_error} specified timestamp format string contains illegal "
+                f"placeholder ({placeholder})"
+            )
+            exit(1)
+
+    pymtheg_replaceables = ("{cs}", "{css}", "{ce}", "{ces}", "{cer}")
+    for placeholder in pymtheg_replaceables:
+        if placeholder in str(args.dir):
+            console.print(
+                f"{premsg_error} specified dir format string contains illegal "
+                f"placeholder ({placeholder})"
+            )
+            exit(1)
+
+        if placeholder in str(args.out):
+            console.print(
+                f"{premsg_error} specified out format string contains illegal "
+                f"placeholders ({placeholder})"
+            )
+            exit(1)
+
     bev = Behaviour(
-        query=args.query,
+        queries=args.queries,
         dir=Path(args.dir),
         out=args.out,
+        timestamp_format=args.timestamp_format,
         ext=args.ext,
         sdargs=args.sdargs.split(),
         ffargs=args.ffargs.split(),
