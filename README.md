@@ -35,14 +35,12 @@ Poetry instead.
 ## Usage
 
 ```text
-usage: pymtheg [-h] [-d DIR] [-o OUT] [-tf TIMESTAMP_FORMAT] [-e EXT] [-sda SDARGS] [-ffa FFARGS]
-               [-cs CLIP_START] [-ce CLIP_END] [-i IMAGE] [-ud] [-y]
-               queries [queries ...]
+usage: pymtheg [-h] [-d DIR] [-o OUT] [-tf TIMESTAMP_FORMAT] [-e EXT] [-sda SDARGS] [-ffa FFARGS] [-cs CLIP_START] [-ce CLIP_END] [-i IMAGE] [-ud] [-y] queries [queries ...]
 
 a python script to share songs from Spotify/YouTube as a 15 second clip
 
 positional arguments:
-  queries                 song queries (see querying)
+  queries               song queries (see querying)
 
 options:
   -h, --help            show this help message and exit
@@ -82,7 +80,7 @@ argument defaults:
   -o, --out:
     "{artists} - {title}"
   -t, --timestamp-format:
-     ({cs}{cer})
+    " ({cs}{cer})"
 
 formatting:
   available placeholders:
@@ -90,14 +88,18 @@ formatting:
       {artist}, {artists}, {title}, {album}, {playlist}
     from pymtheg:
       {cs}
-        clip end as per [(h*)mm]ss, e.g. 10648 (1h, 06m, 48s)
+        clip end as per [(h*)mm]ss
+        e.g. 10648 (1h, 06m, 48s)
       {css}
-        clip end in seconds, e.g. 4008 (1h, 6m, 48s -> 4008s)
+        clip end in seconds
+        e.g. 4008 (1h, 6m, 48s -> 4008s)
       {ce}
         clip end as per [(h*)mm]ss, e.g. 10703 (1h, 07m, 03s)
       {ces}
-        clip end in seconds, e.g. 4023 (1h, 07m, 03s -> 4023s)
+        clip end in seconds
+        e.g. 4023 (1h, 07m, 03s -> 4023s)
       {cer}
+        clip end relative to clip start, prefixed with +
         e.g. +15
     
       notes:
@@ -105,33 +107,19 @@ formatting:
         2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
            digits and will be right adjusted with 0s if needed, however hours
            can be represented by any number of characters, e.g. "1" or "123456"
+
+examples:
+  1. get a song through a spotify link
+    pymtheg "https://open.spotify.com/track/..."
+  2. get a song through a search query
+    pymtheg "thundercat - them changes"
+  3. get multiple songs through multiple queries
+    pymtheg "https://open.spotify.com/track/..." "<query 2>"
+  4. get a random 15s clip of a song
+    pymtheg "<query>" -cs "*" -ce "+15" -ud 
+
+  note: see querying for more information on queries
 ```
-
-### Examples
-
-1. Get a song through a Spotify link
-
-   ```text
-   pymtheg "https://open.spotify.com/track/7CH99b2i1TXS5P8UUyWtnM"
-   ```
-
-2. Get a song through a search query
-
-   ```text
-   pymtheg "thundercat - them changes"
-   ```
-
-3. Get multiple songs through multiple queries
-
-   ```text
-   pymtheg "https://open.spotify.com/track/7CH99b2i1TXS5P8UUyWtnM" "silk sonic blast off"
-   ```
-
-4. Same as 1, however you set the clip start to random and let pymtheg suprise you
-
-   ```text
-   pymtheg "https://open.spotify.com/track/7CH99b2i1TXS5P8UUyWtnM" -cs "*" -ce "+15" --use-defaults
-   ```
 
 ### Return Codes
 

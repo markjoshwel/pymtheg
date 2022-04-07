@@ -25,7 +25,6 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
 For more information, please refer to <http://unlicense.org/>
 """
 
-from re import M
 from typing import Iterable, List, NamedTuple, Optional, Tuple, Union
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -118,15 +117,15 @@ def main() -> None:
                 # print timestamp format/using default message on first song
                 if bev.use_defaults:
                     console.print(
-                        f"{premsg_info} using defaults, clip start will be {bev.clip_start} and clip "
-                        f" end will be {bev.clip_end}\n"
+                        f'{premsg_info} using defaults, clip start is "{bev.clip_start}"'
+                        f' and clip end is "{bev.clip_end}"\n'
                     )
 
                 else:
                     console.print(f"{premsg_info} enter timestamps in format \[hh:mm:]ss")
-                    console.print("               timestamp can be '*' for random")
+                    console.print('               timestamp can be "*" for random')
                     console.print(
-                        "               end timestamp can be relative, prefix with '+'"
+                        '               end timestamp can be relative, prefix with "+"'
                     )
                     console.print(
                         f"               press enter to use given defaults "
@@ -321,7 +320,7 @@ def main() -> None:
                 out_path.exists()
                 and bev.yes is False
             ):
-                console.print(f"{info_notice}'{out_path.name}' exists in output dir.")
+                console.print(f'{info_notice}"{out_path.name}" exists in output dir.')
                 overwrite_response = input(
                     f"{' ' * indent}overwrite? ([y]es/[n]o/[c]hange) "
                 ).lower()
@@ -428,7 +427,8 @@ def main() -> None:
 
 
 def part_of_day() -> str:
-    """used to greet user goodbye
+    """
+    used to greet user goodbye
 
     call it bloat or whatever, i like it
     """
@@ -505,7 +505,8 @@ def to_timestamp(timestamp: int) -> str:
 
 
 def tf_format(string: str, clip_start: int, clip_end: int) -> str:
-    """formats a string with clip information, returns result
+    """
+    formats a string with clip information, returns result
 
     clip_start: int
         clip start in seconds
@@ -624,7 +625,7 @@ def get_args(console: Console) -> Behaviour:
         description=(
             "a python script to share songs from Spotify/YouTube as a 15 second clip"
         ),
-        epilog=f'''querying:
+        epilog=f"""querying:
   queries are passed onto spotdl, and thus must be any one of the following:
     1. text
       "<query>"
@@ -642,7 +643,7 @@ argument defaults:
   -o, --out:
     "{OUT}"
   -t, --timestamp-format:
-    {TIMESTAMP_FORMAT}
+    "{TIMESTAMP_FORMAT}"
 
 formatting:
   available placeholders:
@@ -650,21 +651,38 @@ formatting:
       {{artist}}, {{artists}}, {{title}}, {{album}}, {{playlist}}
     from pymtheg:
       {{cs}}
-        clip end as per [(h*)mm]ss, e.g. 10648 (1h, 06m, 48s)
+        clip end as per [(h*)mm]ss
+        e.g. 10648 (1h, 06m, 48s)
       {{css}}
-        clip end in seconds, e.g. 4008 (1h, 6m, 48s -> 4008s)
+        clip end in seconds
+        e.g. 4008 (1h, 6m, 48s -> 4008s)
       {{ce}}
         clip end as per [(h*)mm]ss, e.g. 10703 (1h, 07m, 03s)
       {{ces}}
-        clip end in seconds, e.g. 4023 (1h, 07m, 03s -> 4023s)
+        clip end in seconds
+        e.g. 4023 (1h, 07m, 03s -> 4023s)
       {{cer}}
+        clip end relative to clip start, prefixed with +
         e.g. +15
     
       notes:
         1. pymtheg placeholders can only be used with `-tf, --timestamp-format`
         2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
            digits and will be right adjusted with 0s if needed, however hours
-           can be represented by any number of characters, e.g. "1" or "123456"''',
+           can be represented by any number of characters, e.g. "1" or "123456"
+
+examples:
+  1. get a song through a spotify link
+    pymtheg "https://open.spotify.com/track/..."
+  2. get a song through a search query
+    pymtheg "thundercat - them changes"
+  3. get multiple songs through multiple queries
+    pymtheg "https://open.spotify.com/track/..." "<query 2>"
+  4. get a random 15s clip of a song
+    pymtheg "<query>" -cs "*" -ce "+15" -ud 
+
+  note: see querying for more information on queries
+""",
         formatter_class=RawTextHelpFormatter,
     )
 
@@ -755,7 +773,7 @@ formatting:
     if end_timestamp is None:
         console.print(
             f"{premsg_error} invalid clip end (format: [hh:mm:]ss), "
-            "prefix with '+' for relative timestamp"
+            'prefix with "+" for relative timestamp'
         )
         exit(1)
 

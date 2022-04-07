@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.3.1
+
+Quality of use updates + minor code fixes/changes
+
+- removed unused import
+- add explanatory text for {cer} placeholder in --help
+- added examples to pymtheg --help
+- removed extra space in using defaults text, standardised usage of " for representing text in text
+- reworked timestamp parsing to ensure that e.g. `-cs "*" -ce "+15"` will always be `+15` seconds
+
 ## 2.3.0
 
 Changes to command line arguments, quality of use updates
