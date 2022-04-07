@@ -25,7 +25,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
 For more information, please refer to <http://unlicense.org/>
 """
 
-from typing import Iterable, List, NamedTuple, Optional, Tuple, Union
+from typing import Iterable, List, Literal, NamedTuple, Optional, Tuple, Union
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 from tempfile import TemporaryDirectory
@@ -37,7 +37,7 @@ from shutil import move
 from json import loads
 import subprocess
 
-from rich.console import Console
+from rich.console import Console, _is_jupyter
 
 
 FFARGS: str = (
@@ -46,26 +46,34 @@ FFARGS: str = (
 )
 OUT: str = "{artists} - {title}"
 TIMESTAMP_FORMAT: str = " ({cs}{cer})"
+CLIP_START: str = "0"
+CLIP_END: str = "+15"
 
 premsg_info = "[dim]pymtheg: [/dim][bold cyan]info[/bold cyan][dim]:[/]"
 premsg_error = "[dim]pymtheg: [/dim][bold red]error[/bold red][dim]:[/]"
 
 
-class EndTimestamp(NamedTuple):
+class Timestamp(NamedTuple):
     """
-    end timestamp named tuple
+    timestamp named tuple
 
+    type: Literal[0] | Literal[1] (int)
+        0 if start timestamp; 1 if end timestamp
     ss: int
-        timestamp of clip end in seconds
+        timestamp in seconds
+    random: bool
+        is timestamp random
     relative: bool = False
-        is ss relative to clip start?
+        is timestamp relative
     """
 
-    ts: str
+    type: Union[Literal[0], Literal[1]]
+    ss: int
+    random: bool = False
     relative: bool = False
 
     def __str__(self) -> str:
-        return self.ts
+        return ("+" if self.relative else "") + str(self.ss)
 
 
 class Behaviour(NamedTuple):
@@ -78,8 +86,8 @@ class Behaviour(NamedTuple):
     ext: str
     sdargs: List[str]
     ffargs: List[str]
-    clip_start: str
-    clip_end: EndTimestamp
+    clip_start: Timestamp
+    clip_end: Timestamp
     image: Optional[Path]
     use_defaults: bool
     yes: bool
@@ -194,16 +202,9 @@ def main() -> None:
             video_clip_path = tmpdir.joinpath(f"{song_path.stem}_clip.mp4").absolute()
 
             # get timestamps
-            start_timestamp = parse_timestamp(
-                ts=bev.clip_start, song_duration=song_duration
+            start_timestamp, end_timestamp = parse_timestamps(
+                bev.clip_start, bev.clip_end, duration=song_duration
             )
-            assert isinstance(start_timestamp, int)
-            end_timestamp = parse_timestamp(
-                ts=bev.clip_end.ts,
-                song_duration=song_duration,
-                relative_to=start_timestamp,
-            )
-            assert isinstance(end_timestamp, int)
 
             if bev.clip_end.relative:
                 end_timestamp += start_timestamp
@@ -212,15 +213,15 @@ def main() -> None:
                 end_timestamp = song_duration
 
             if not bev.use_defaults:
+                # timestamp prompt
                 while True:
                     # starting timestamp
                     while True:
                         cs_response = input(query_clip_start)
 
                         if cs_response != "":
-                            _start_timestamp = parse_timestamp(
-                                cs_response, song_duration=song_duration
-                            )
+                            global _start_timestamp
+                            _start_timestamp = check_timestamp(0, cs_response)
 
                             if _start_timestamp is None:
                                 # invalid format
@@ -231,49 +232,52 @@ def main() -> None:
                                     + "[/dim][bold] invalid timestamp",
                                 )
 
-                            elif _start_timestamp >= song_duration:
-                                # invalid, timestamp >= song duration
-                                console.print(
-                                    "[dim][red]"
-                                    + (" " * indent)
-                                    + ("^" * len(cs_response))
-                                    + "[/dim][bold] timestamp exceeds song duration",
-                                )
-
                             else:
-                                # valid, continue
-                                end_timestamp = (
-                                    end_timestamp - start_timestamp
-                                ) + _start_timestamp
-                                start_timestamp = _start_timestamp
-                                break
+                                if _start_timestamp.ss > song_duration:
+                                    # invalid, timestamp >= song duration
+                                    console.print(
+                                        "[dim][red]"
+                                        + (" " * indent)
+                                        + ("^" * len(cs_response))
+                                        + "[/dim][bold] timestamp exceeds song duration",
+                                    )
 
-                        elif cs_response == "":
+                                else:
+                                    break
+
+                        else:
                             break
 
                     # ending timestamp
                     while True:
                         ce_response = input(query_clip_end)
-                        if ce_response != "":
-                            _end_timestamp = parse_timestamp(
-                                ce_response,
-                                relative_to=start_timestamp,
-                                song_duration=song_duration,
-                            )
+
+                        if cs_response != "":
+                            global _end_timestamp
+                            _end_timestamp = check_timestamp(1, ce_response)
 
                             if _end_timestamp is None:
-                                # reprompt if invalid
+                                # invalid format
                                 console.print(
-                                    (" " * indent) + ("^" * len(ce_response)),
-                                    "invalid timestamp",
+                                    "[dim][red]"
+                                    + (" " * indent)
+                                    + ("^" * len(cs_response))
+                                    + "[/dim][bold] invalid timestamp",
                                 )
 
                             else:
-                                end_timestamp = _end_timestamp
                                 break
 
-                        elif ce_response == "":
+                        else:
                             break
+
+                    assert isinstance(_start_timestamp, Timestamp)
+                    assert isinstance(_end_timestamp, Timestamp)
+
+                    # parse timestamps
+                    start_timestamp, end_timestamp = parse_timestamps(
+                        _start_timestamp, _end_timestamp, duration=song_duration
+                    )
 
                     # confirm timestamps
                     if bev.yes:
@@ -301,6 +305,11 @@ def main() -> None:
 
                     else:
                         break
+
+            elif start_timestamp > song_duration:
+                console.print(f"{info_notice}skipping song")
+                processed += 1
+                break
 
             # construct and confirm output path
             out_path: Path = bev.dir.joinpath(
@@ -494,12 +503,101 @@ def parse_timestamp(
         return None
 
 
-def to_timestamp(timestamp: int) -> str:
-    """returns a [hh:mm:]ss timestamp string from `timestamp: int`"""
-    _mm = timestamp // 60
+# TODO: relative doesnt work
+def check_timestamp(type: Union[Literal[0], Literal[1]], ts: str) -> Optional[Timestamp]:
+    """
+    checks timestamps for timestamp retrieval and command line argument validation
+
+    ts: str
+        timestamp string
+    type: Literal[0] | Literal[1] (int)
+        0 if start timestamp; 1 if end timestamp
+
+    returns a Timestamp object if check was successful else None
+    """
+    ts = ts.strip()
+
+    if ts == "*":
+        return Timestamp(type=type, ss=0, random=True)
+
+    elif ts == "-1":
+        return Timestamp(type=type, ss=-1)
+
+    else:
+        relative: bool
+        if ts.startswith("+"):
+            if type == 0:  # relative timestamps in start timestamp are not allowed
+                return None
+
+            relative = True
+            ts = ts[:1]
+
+        else:
+            relative = False
+
+        sts = ts.split(":")  # split time stamp (hh:mm:ss)
+        sts.reverse()  # (ss:mm:hh)
+
+        tu_conv = [1, 60, 3600]  # time unit conversion
+        total_ss = 0  # total seconds
+
+        if len(sts) < 4:
+            for tu, tu_c in zip(sts, tu_conv):
+                if tu.isnumeric():
+                    total_ss += int(tu) * tu_c
+
+                else:
+                    return None
+
+            return Timestamp(type=type, ss=total_ss, relative=relative)
+
+        else:
+            return None
+
+
+def parse_timestamps(start: Timestamp, end: Timestamp, duration: int) -> Tuple[int, int]:
+    """
+    parses start timestamp and end timestamp into absolute seconds
+
+    start: Timestamp
+        start timestamp
+    end: Timestamp
+        end timestamp
+    duration: int
+        song duration in seconds
+
+    returns song start and song end respectively, in seconds
+    """
+    ts_start: int
+    ts_end: int
+    
+    if start.random and end.random:
+        ts_start = randint(0, duration)
+        ts_end = randint(ts_start, duration)
+    
+    # TODO: finish this
+    elif start.random:
+        ensure_random = end.ss if end.relative else 0
+        ts_start = randint(0, duration - ensure_random)
+        ts_end = ts_start + end.ss
+
+    elif end.random:
+        ts_start = start.ss
+        ts_end = randint(start.ss, duration)
+
+    else:
+        ts_start = start.ss
+        ts_end = (start.ss + end.ss) if end.relative else end.ss
+    
+    return (ts_start, ts_end)
+
+
+def to_timestamp(ts: int) -> str:
+    """returns a [hh:mm:]ss timestamp string from `ts: int`"""
+    _mm = ts // 60
     hh = _mm // 60
     mm = _mm - hh * 60
-    ss = timestamp % 60
+    ss = ts % 60
 
     return ":".join([str(unit) for unit in (hh, mm) if unit != 0] + [str(ss)])
 
@@ -728,7 +826,7 @@ examples:
         help="specify clip start (default 0)",
         dest="clip_start",
         type=str,
-        default="0",
+        default=CLIP_START,
     )
     parser.add_argument(
         "-ce",
@@ -736,7 +834,7 @@ examples:
         help="specify clip end (default +15)",
         dest="clip_end",
         type=str,
-        default="+15",
+        default=CLIP_END,
     )
     parser.add_argument(
         "-i", "--image", help="specify custom image", type=Path, default=None
@@ -744,7 +842,7 @@ examples:
     parser.add_argument(
         "-ud",
         "--use-defaults",
-        help="use 0 as clip start and --clip-length as clip end",
+        help="use --clip-start as clip start and --clip-length as clip end",
         dest="use_defaults",
         action="store_true",
         default=False,
@@ -760,16 +858,13 @@ examples:
     args = parser.parse_args()
 
     # validate clip start/end
-    if args.clip_start != "*" and parse_timestamp(args.clip_start, -1) is None:
+    start_timestamp = check_timestamp(args.clip_start, 0)
+    end_timestamp = check_timestamp(args.clip_end, 1)
+
+    if start_timestamp is None:
         console.print(f"{premsg_error} invalid clip start (format: [hh:mm:]ss)")
         exit(1)
 
-    end_timestamp = parse_timestamp(
-        # use dumb values, because who knows if somebody sets it to -1
-        args.clip_end,
-        song_duration=-1,
-        relative_to=0,
-    )
     if end_timestamp is None:
         console.print(
             f"{premsg_error} invalid clip end (format: [hh:mm:]ss), "
@@ -817,10 +912,8 @@ examples:
         ext=args.ext,
         sdargs=args.sdargs.split(),
         ffargs=args.ffargs.split(),
-        clip_start=args.clip_start,
-        clip_end=EndTimestamp(
-            args.clip_end, relative=True if args.clip_end.startswith("+") else False
-        ),
+        clip_start=start_timestamp,
+        clip_end=end_timestamp,
         image=args.image,
         use_defaults=args.use_defaults,
         yes=args.yes,
