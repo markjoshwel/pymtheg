@@ -77,11 +77,6 @@ class Timestamp(NamedTuple):
         return ("+" if self.relative else "") + str(self.ss)
 
 
-# because mypy (python/mypy#5732)
-_start_timestamp: Optional[Timestamp]
-_end_timestamp: Optional[Timestamp]
-
-
 class Behaviour(NamedTuple):
     """typed command line argument tuple"""
 
@@ -219,6 +214,9 @@ def main() -> None:
             if not bev.use_defaults:
                 # timestamp prompt
                 while True:
+                    _start_timestamp: Optional[Timestamp] = None
+                    _end_timestamp: Optional[Timestamp] = None
+
                     # starting timestamp
                     while True:
                         cs_response = input(query_clip_start)
@@ -249,6 +247,7 @@ def main() -> None:
                                     break
 
                         else:
+                            _start_timestamp = bev.clip_start
                             break
 
                     # ending timestamp
@@ -271,6 +270,7 @@ def main() -> None:
                                 break
 
                         else:
+                            _end_timestamp = bev.clip_end
                             break
 
                     assert isinstance(_start_timestamp, Timestamp)  # type: ignore
@@ -543,13 +543,13 @@ def parse_timestamps(start: Timestamp, end: Timestamp, duration: int) -> Tuple[i
 
 
 def to_timestamp(ts: int) -> str:
-    """returns a [hh:mm:]ss timestamp string from `ts: int`"""
+    """returns a [(h*):mm:]ss timestamp string from `ts: int`"""
     _mm = ts // 60
     hh = _mm // 60
     mm = _mm - hh * 60
     ss = ts % 60
-    fts = ":".join([str(unit) for unit in (hh, mm) if unit != 0] + [str(ss)])
-    return fts if fts == "0" else fts.lstrip("0")
+
+    return ":".join([str(u).rjust(2, "0") for u in (hh, mm) if u != 0] + [str(ss).rjust(2, "0")]).lstrip("0")
 
 
 def tf_format(string: str, clip_start: int, clip_end: int) -> str:
@@ -577,7 +577,7 @@ def tf_format(string: str, clip_start: int, clip_end: int) -> str:
             else:
                 result = str(unit) + result
 
-        return result
+        return result.lstrip("0")
 
     replaceables = (
         ("{cs}", ts_format(clip_start)),

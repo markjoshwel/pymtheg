@@ -10,7 +10,7 @@ use with Termux.
 
 See [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
 
-[![asciicast](https://asciinema.org/a/483803.svg)](https://asciinema.org/a/483803)
+[![asciicast](https://asciinema.org/a/485075.svg)](https://asciinema.org/a/485075)
 
 ## Installation
 
