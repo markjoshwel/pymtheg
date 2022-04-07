@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - 'pymtheg.py'
+      - 'poetry.lock'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
 jobs:
   Test:
     runs-on: ubuntu-latest
