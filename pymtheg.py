@@ -549,7 +549,9 @@ def to_timestamp(ts: int) -> str:
     mm = _mm - hh * 60
     ss = ts % 60
 
-    return ":".join([str(u).rjust(2, "0") for u in (hh, mm) if u != 0] + [str(ss).rjust(2, "0")]).lstrip("0")
+    return ":".join(
+        [str(u).rjust(2, "0") for u in (hh, mm) if u != 0] + [str(ss).rjust(2, "0")]
+    ).lstrip("0")
 
 
 def tf_format(string: str, clip_start: int, clip_end: int) -> str:
