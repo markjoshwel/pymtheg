@@ -27,20 +27,6 @@ Run the following command in the terminal:
 curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-setup | sh
 ```
 
-Once done, grant Termux access to your internal storage using the following command:
-
-```text
-termux-setup-storage
-```
-
-Done!
-
-Note: This script will work if:
-
-- Your Termux installation is fresh, or
-- You do not have a folder named `storage` in your home directory and have no
-  `termux-url-opener` script
-
 ### Manual Setup
 
 1. Install Python, ffmpeg and termux-api
