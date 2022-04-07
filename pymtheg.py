@@ -121,6 +121,24 @@ def main() -> None:
             if song_path.suffix not in [".m4a", ".ogg", ".flac", ".mp3", ".wav", ".opus"]:
                 continue
 
+            # duration retrieval
+            with console.status(f"[dim]status: probe song duration[/]", spinner="arc"):
+                proc = invocate(
+                    console=console,
+                    name="ffprobe",
+                    args=[
+                        "-print_format",
+                        "json",
+                        "-show_entries",
+                        "format=duration",
+                        song_path,
+                    ],
+                    capture_output=True,
+                )
+                song_duration: int = int(
+                    loads(proc.stdout)["format"]["duration"].split(".")[0]
+                )
+
             if processed == 0:
                 # print timestamp format/using default message on first song
                 if bev.use_defaults:
@@ -137,10 +155,10 @@ def main() -> None:
                     )
                     console.print(
                         f"               press enter to use given defaults "
-                        f"({bev.clip_start}, {bev.clip_end})\n"
+                        f'("{bev.clip_start}", "{bev.clip_end}")\n'
                     )
 
-            console.print(f"- [bold]{song_path.stem}[/]")
+            console.print(f"- [bold]{song_path.stem}[/] ({to_timestamp(song_duration)})")
 
             # generate query/info messages
             _msg_format = "    {}: "
@@ -174,26 +192,6 @@ def main() -> None:
             )
             info_notice = _msg_format.format(_info_notice.rjust(_longest_msg_len))
             indent = len(_msg_format) - 2 + _longest_msg_len
-
-            # duration retrieval
-            with console.status(
-                f"[dim]{info_status}probe song duration[/]", spinner="arc"
-            ):
-                proc = invocate(
-                    console=console,
-                    name="ffprobe",
-                    args=[
-                        "-print_format",
-                        "json",
-                        "-show_entries",
-                        "format=duration",
-                        song_path,
-                    ],
-                    capture_output=True,
-                )
-                song_duration: int = int(
-                    loads(proc.stdout)["format"]["duration"].split(".")[0]
-                )
 
             # construct working paths
             song_path = song_path.absolute()
@@ -252,7 +250,7 @@ def main() -> None:
                     while True:
                         ce_response = input(query_clip_end)
 
-                        if cs_response != "":
+                        if ce_response != "":
                             global _end_timestamp
                             _end_timestamp = check_timestamp(1, ce_response)
 
@@ -284,7 +282,7 @@ def main() -> None:
                         break
 
                     # dont prompt confirmation if defaults were used
-                    if not cs_response == "" and ce_response == "":
+                    if not (cs_response == "" and ce_response == ""):
                         console.print(
                             "{premsg}clip duration: {start} -> {end} ({duration}s)".format(
                                 premsg=info_notice,
@@ -453,57 +451,6 @@ def part_of_day() -> str:
     )
 
 
-def parse_timestamp(
-    ts: str,
-    song_duration: int,
-    relative_to: Optional[int] = None,
-) -> Optional[int]:
-    """
-    parse user-submitted timestamp
-
-    ts: str
-        timestamp following [hh:mm:]ss format (e.g. 2:49, 5:18:18)
-    song_duration: int
-        used for the -1 relative end timestamp or random timestamps
-    relative_to: Optional[int] = None
-        used for relative end or random timestamps
-    """
-    timestamp = 0
-
-    if ts == "*":
-        if song_duration == -1:
-            return -1
-
-        return randint(0 if relative_to is None else relative_to + 1, song_duration)
-
-    elif ts == "-1" and song_duration is not None:
-        return song_duration
-
-    elif ts.startswith("+") and relative_to is not None:
-        ts = ts[1:]
-        timestamp += relative_to
-
-    sts = ts.split(":")  # split time stamp (hh:mm:ss)
-    sts.reverse()  # (ss:mm:hh)
-
-    tu_conv = [1, 60, 3600]  # time unit conversion
-    total_ss = 0  # total seconds
-
-    if len(sts) < 4:
-        for tu, tu_c in zip(sts, tu_conv):
-            if tu.isnumeric():
-                total_ss += int(tu) * tu_c
-
-            else:
-                return None
-
-        return timestamp + total_ss
-
-    else:
-        return None
-
-
-# TODO: relative doesnt work
 def check_timestamp(type: Union[Literal[0], Literal[1]], ts: str) -> Optional[Timestamp]:
     """
     checks timestamps for timestamp retrieval and command line argument validation
@@ -530,7 +477,7 @@ def check_timestamp(type: Union[Literal[0], Literal[1]], ts: str) -> Optional[Ti
                 return None
 
             relative = True
-            ts = ts[:1]
+            ts = ts[1:]
 
         else:
             relative = False
@@ -570,11 +517,11 @@ def parse_timestamps(start: Timestamp, end: Timestamp, duration: int) -> Tuple[i
     """
     ts_start: int
     ts_end: int
-    
+
     if start.random and end.random:
         ts_start = randint(0, duration)
         ts_end = randint(ts_start, duration)
-    
+
     # TODO: finish this
     elif start.random:
         ensure_random = end.ss if end.relative else 0
@@ -588,7 +535,7 @@ def parse_timestamps(start: Timestamp, end: Timestamp, duration: int) -> Tuple[i
     else:
         ts_start = start.ss
         ts_end = (start.ss + end.ss) if end.relative else end.ss
-    
+
     return (ts_start, ts_end)
 
 
@@ -858,8 +805,8 @@ examples:
     args = parser.parse_args()
 
     # validate clip start/end
-    start_timestamp = check_timestamp(args.clip_start, 0)
-    end_timestamp = check_timestamp(args.clip_end, 1)
+    start_timestamp = check_timestamp(0, args.clip_start)
+    end_timestamp = check_timestamp(1, args.clip_end)
 
     if start_timestamp is None:
         console.print(f"{premsg_error} invalid clip start (format: [hh:mm:]ss)")

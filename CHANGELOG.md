@@ -9,6 +9,7 @@ Quality of use updates + minor code fixes/changes
 - added examples to pymtheg --help
 - removed extra space in using defaults text, standardised usage of " for representing text in text
 - reworked timestamp parsing to ensure that e.g. `-cs "*" -ce "+15"` will always be `+15` seconds
+- fix timestamp confirmation not appearing sometimes
 
 ## 2.3.0
 
