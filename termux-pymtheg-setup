@@ -1,4 +1,5 @@
 #!/bin/sh
+termux-setup-storage
 yes | pkg upgrade \
   && yes | pkg install python ffmpeg termux-api \
   && pip install rapidfuzz==1.9.1 \

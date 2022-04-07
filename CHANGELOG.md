@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.3.1
+
+Quality of use updates + minor code fixes/changes
+
+- removed unused import
+- add explanatory text for {cer} placeholder in --help
+- added examples to pymtheg --help
+- removed extra space in using defaults text, standardised usage of " for representing text in text
+- reworked timestamp handling to ensure that e.g. `-cs "*" -ce "+15"` will always be `+15` seconds
+- fix timestamp confirmation not appearing sometimes
+- show song duration alongside song name
+- 0 left strip confirmation timestamps/file name timestamps/song duration
+- fix text formatting for invalid clip start/end messages during command line argument validation
+- update spotdl to 3.9.4
+- update rich to 12.2.0
+- minimum python version is now 3.6.3
+
+
 ## 2.3.0
 
 Changes to command line arguments, quality of use updates
