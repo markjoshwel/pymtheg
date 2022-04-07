@@ -814,12 +814,12 @@ examples:
     end_timestamp = check_timestamp(1, args.clip_end)
 
     if start_timestamp is None:
-        console.print(f"{premsg_error} invalid clip start (format: [hh:mm:]ss)")
+        console.print(f"{premsg_error} invalid clip start (format: \[hh:mm:]ss)")
         exit(1)
 
     if end_timestamp is None:
         console.print(
-            f"{premsg_error} invalid clip end (format: [hh:mm:]ss), "
+            f"{premsg_error} invalid clip end (format: \[hh:mm:]ss), "
             'prefix with "+" for relative timestamp'
         )
         exit(1)
