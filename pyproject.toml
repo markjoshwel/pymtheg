@@ -28,8 +28,8 @@ line-length = 90
 pymtheg = 'pymtheg:main'
 
 [tool.poetry.dependencies]
-python = "^3.6.2"
-spotdl = "^3.9.3"
+python = "^3.6.3"
+spotdl = "^3.9.4"
 rich = "^12.2.0"
 
 [tool.poetry.dev-dependencies]

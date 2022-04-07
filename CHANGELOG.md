@@ -13,6 +13,10 @@ Quality of use updates + minor code fixes/changes
 - show song duration alongside song name
 - 0 left strip confirmation timestamps/file name timestamps/song duration
 - fix text formatting for invalid clip start/end messages during command line argument validation
+- update spotdl to 3.9.4
+- update rich to 12.2.0
+- minimum python version is now 3.6.3
+
 
 ## 2.3.0
 
