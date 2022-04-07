@@ -105,8 +105,10 @@ formatting:
       notes:
         1. pymtheg placeholders can only be used with `-tf, --timestamp-format`
         2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
-           digits and will be right adjusted with 0s if needed, however hours
-           can be represented by any number of characters, e.g. "1" or "123456"
+           digits and will be right adjusted with 0s if needed, unless they are
+           the first shown unit where they may have up to two characters. hours
+           can be represented by any number of characters.
+           e.g. "138:02:09", "1:59:08", "2:05", "6"
 
 examples:
   1. get a song through a spotify link

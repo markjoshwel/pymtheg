@@ -1,10 +1,11 @@
 """
 pymtheg: A Python script to share songs from Spotify/YouTube as a 15 second clip
--------
+
+--------------------------------------------------------------------------------
 
 This is free and unencumbered software released into the public domain.
 
------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------
 
 Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software,
 either in source code form or as a compiled binary, for any purpose, commercial or
@@ -37,7 +38,7 @@ from shutil import move
 from json import loads
 import subprocess
 
-from rich.console import Console, _is_jupyter
+from rich.console import Console
 
 
 FFARGS: str = (
@@ -57,7 +58,7 @@ class Timestamp(NamedTuple):
     """
     timestamp named tuple
 
-    type: Literal[0] | Literal[1] (int)
+    type: Literal[0] | Literal[1]
         0 if start timestamp; 1 if end timestamp
     ss: int
         timestamp in seconds
@@ -272,8 +273,8 @@ def main() -> None:
                         else:
                             break
 
-                    assert isinstance(_start_timestamp, Timestamp)
-                    assert isinstance(_end_timestamp, Timestamp)
+                    assert isinstance(_start_timestamp, Timestamp)  # type: ignore
+                    assert isinstance(_end_timestamp, Timestamp)  # type: ignore
 
                     # parse timestamps
                     start_timestamp, end_timestamp = parse_timestamps(
@@ -460,7 +461,7 @@ def check_timestamp(type: Union[Literal[0], Literal[1]], ts: str) -> Optional[Ti
 
     ts: str
         timestamp string
-    type: Literal[0] | Literal[1] (int)
+    type: Literal[0] | Literal[1]
         0 if start timestamp; 1 if end timestamp
 
     returns a Timestamp object if check was successful else None
@@ -525,7 +526,6 @@ def parse_timestamps(start: Timestamp, end: Timestamp, duration: int) -> Tuple[i
         ts_start = randint(0, duration)
         ts_end = randint(ts_start, duration)
 
-    # TODO: finish this
     elif start.random:
         ensure_random = end.ss if end.relative else 0
         ts_start = randint(0, duration - ensure_random)
@@ -548,8 +548,8 @@ def to_timestamp(ts: int) -> str:
     hh = _mm // 60
     mm = _mm - hh * 60
     ss = ts % 60
-
-    return ":".join([str(unit) for unit in (hh, mm) if unit != 0] + [str(ss)])
+    fts = ":".join([str(unit) for unit in (hh, mm) if unit != 0] + [str(ss)])
+    return fts if fts == "0" else fts.lstrip("0")
 
 
 def tf_format(string: str, clip_start: int, clip_end: int) -> str:
@@ -716,8 +716,10 @@ formatting:
       notes:
         1. pymtheg placeholders can only be used with `-tf, --timestamp-format`
         2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
-           digits and will be right adjusted with 0s if needed, however hours
-           can be represented by any number of characters, e.g. "1" or "123456"
+           digits and will be right adjusted with 0s if needed, unless they are
+           the first shown unit where they may have up to two characters. hours
+           can be represented by any number of characters.
+           e.g. "138:02:09", "1:59:08", "2:05", "6"
 
 examples:
   1. get a song through a spotify link

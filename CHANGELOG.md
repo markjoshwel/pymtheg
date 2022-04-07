@@ -10,6 +10,8 @@ Quality of use updates + minor code fixes/changes
 - removed extra space in using defaults text, standardised usage of " for representing text in text
 - reworked timestamp parsing to ensure that e.g. `-cs "*" -ce "+15"` will always be `+15` seconds
 - fix timestamp confirmation not appearing sometimes
+- show song duration alongside song name
+- 0 left strip confirmation timestamps/file name timestamps/song duration
 
 ## 2.3.0
 
