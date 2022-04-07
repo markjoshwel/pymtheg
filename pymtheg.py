@@ -76,6 +76,11 @@ class Timestamp(NamedTuple):
         return ("+" if self.relative else "") + str(self.ss)
 
 
+# because mypy (python/mypy#5732)
+_start_timestamp: Optional[Timestamp]
+_end_timestamp: Optional[Timestamp]
+
+
 class Behaviour(NamedTuple):
     """typed command line argument tuple"""
 
@@ -218,7 +223,6 @@ def main() -> None:
                         cs_response = input(query_clip_start)
 
                         if cs_response != "":
-                            global _start_timestamp
                             _start_timestamp = check_timestamp(0, cs_response)
 
                             if _start_timestamp is None:
@@ -251,7 +255,6 @@ def main() -> None:
                         ce_response = input(query_clip_end)
 
                         if ce_response != "":
-                            global _end_timestamp
                             _end_timestamp = check_timestamp(1, ce_response)
 
                             if _end_timestamp is None:
