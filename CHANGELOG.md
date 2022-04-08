@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.2
+
+Update READMEs to show new minimum Python version
+
 ## 2.3.1
 
 Quality of use updates + minor code fixes/changes

@@ -10,7 +10,7 @@ contribution instructions/information.
 
 ## Installation
 
-pymtheg requires [Python 3.6.2](https://python.org/) or later,
+pymtheg requires [Python 3.6.3](https://python.org/) or later,
 and [ffmpeg](https://ffmpeg.org/).
 
 ## Usage
