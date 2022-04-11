@@ -16,7 +16,10 @@ and [ffmpeg](https://ffmpeg.org/).
 ## Usage
 
 ```text
-usage: pymtheg [-h] [-d DIR] [-o OUT] [-tf TIMESTAMP_FORMAT] [-e EXT] [-sda SDARGS] [-ffa FFARGS] [-cs CLIP_START] [-ce CLIP_END] [-i IMAGE] [-ud] [-y] queries [queries ...]
+usage: pymtheg [-h] [-d DIR] [-o OUT] [-nt] [-tf TIMESTAMP_FORMAT] [-e EXT]
+               [-sda SDARGS] [-ffa FFARGS] [-cs CLIP_START] [-ce CLIP_END]
+               [-i IMAGE] [-ud] [-y]
+               queries [queries ...]
 
 a python script to share songs from Spotify/YouTube as a 15 second clip
 
@@ -27,6 +30,7 @@ options:
   -h, --help            show this help message and exit
   -d DIR, --dir DIR     directory to output to, formattable (see formatting)
   -o OUT, --out OUT     output file name format, formattable (see formatting)
+  -nt, --no-timestamp   switch to exclude timestamps from output clip paths
   -tf TIMESTAMP_FORMAT, --timestamp-format TIMESTAMP_FORMAT
                         timestamp format, formattable (see formatting)
   -e EXT, --ext EXT     file extension, defaults to "mp4"
@@ -40,7 +44,7 @@ options:
                         specify clip end (default +15)
   -i IMAGE, --image IMAGE
                         specify custom image
-  -ud, --use-defaults   use 0 as clip start and --clip-length as clip end
+  -ud, --use-defaults   use --clip-start as clip start and --clip-length as clip end
   -y, --yes             say yes to every y/n prompt
 
 querying:

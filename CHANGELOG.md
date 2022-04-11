@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.0
+
+Added a timestamp exclusion argument + minor changes/updates
+
+- added `-nt, --no-timestamp` to exclude timestamp from output clip paths
+- not show song duration if defaults are being used (-ud, --use-defaults)
+- updated deps
+
 ## 2.3.2
 
 Update READMEs to show new minimum Python version
@@ -20,7 +28,6 @@ Quality of use updates + minor code fixes/changes
 - update spotdl to 3.9.4
 - update rich to 12.2.0
 - minimum python version is now 3.6.3
-
 
 ## 2.3.0
 
