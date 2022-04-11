@@ -83,6 +83,7 @@ class Behaviour(NamedTuple):
     queries: List[str]
     dir: Path
     out: str
+    no_timestamp: bool
     timestamp_format: str
     ext: str
     sdargs: List[str]
@@ -159,7 +160,14 @@ def main() -> None:
                         f'("{bev.clip_start}", "{bev.clip_end}")\n'
                     )
 
-            console.print(f"- [bold]{song_path.stem}[/] ({to_timestamp(song_duration)})")
+            console.print(
+                "- [bold]{name}[/]{duration}".format(
+                    name=song_path.stem,
+                    duration=f" ({to_timestamp(song_duration)})"
+                    if not bev.use_defaults
+                    else "",
+                )
+            )
 
             # generate query/info messages
             _msg_format = "    {}: "
@@ -321,7 +329,9 @@ def main() -> None:
                         string=bev.timestamp_format,
                         clip_start=start_timestamp,
                         clip_end=end_timestamp,
-                    ),
+                    )
+                    if not bev.no_timestamp
+                    else "",
                     ext=bev.ext,
                 )
             ).absolute()
@@ -754,6 +764,13 @@ examples:
         default=OUT,
     )
     parser.add_argument(
+        "-nt",
+        "--no-timestamp",
+        help="switch to exclude timestamps from output clip paths",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
         "-tf",
         "--timestamp-format",
         type=str,
@@ -862,6 +879,7 @@ examples:
         queries=args.queries,
         dir=Path(args.dir),
         out=args.out,
+        no_timestamp=args.no_timestamp,
         timestamp_format=args.timestamp_format,
         ext=args.ext,
         sdargs=args.sdargs.split(),
