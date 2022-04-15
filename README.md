@@ -35,9 +35,10 @@ Poetry instead.
 ## Usage
 
 ```text
-usage: pymtheg [-h] [-d DIR] [-o OUT] [-nt] [-tf TIMESTAMP_FORMAT] [-e EXT]
-               [-sda SDARGS] [-ffa FFARGS] [-cs CLIP_START] [-ce CLIP_END]
-               [-i IMAGE] [-ud] [-y]
+usage: pymtheg [-h] [-cs CLIP_START] [-ce CLIP_END] [-i IMAGE] [-d DIR]
+               [-o OUT] [-sm] [-smd SAVE_MUSIC_DIR] [-nt]
+               [-tf TIMESTAMP_FORMAT] [-e EXT] [-sda SDARGS] [-ffa FFARGS]
+               [-ud] [-y]
                queries [queries ...]
 
 a python script to share songs from Spotify/YouTube as a 15 second clip
@@ -47,27 +48,38 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -d DIR, --dir DIR     directory to output to, formattable (see formatting)
-  -o OUT, --out OUT     output file name format, formattable (see formatting)
-  -nt, --no-timestamp   switch to exclude timestamps from output clip paths
-  -tf TIMESTAMP_FORMAT, --timestamp-format TIMESTAMP_FORMAT
-                        timestamp format, formattable (see formatting)
-  -e EXT, --ext EXT     file extension, defaults to "mp4"
-  -sda SDARGS, --sdargs SDARGS
-                        args to pass to spotdl
-  -ffa FFARGS, --ffargs FFARGS
-                        args to pass to ffmpeg for clip creation
+
+clip options:
   -cs CLIP_START, --clip-start CLIP_START
                         specify clip start (default 0)
   -ce CLIP_END, --clip-end CLIP_END
                         specify clip end (default +15)
   -i IMAGE, --image IMAGE
                         specify custom image
+
+output options:
+  -d DIR, --dir DIR     directory to output to, formattable (see formatting)
+  -o OUT, --out OUT     output file name format, formattable (see formatting)
+  -sm, --save-music     save downloaded music
+  -smd SAVE_MUSIC_DIR, --save-music-dir SAVE_MUSIC_DIR
+                        directory for downloaded music, defaults to -d/--dir
+  -nt, --no-timestamp   switch to exclude timestamps from output clip paths
+  -tf TIMESTAMP_FORMAT, --timestamp-format TIMESTAMP_FORMAT
+                        timestamp format, formattable (see formatting)
+  -e EXT, --ext EXT     file extension, defaults to "mp4"
+
+tool options:
+  -sda SDARGS, --sdargs SDARGS
+                        args to pass to spotdl
+  -ffa FFARGS, --ffargs FFARGS
+                        args to pass to ffmpeg for clip creation
+
+pymtheg options:
   -ud, --use-defaults   use --clip-start as clip start and --clip-length as clip end
   -y, --yes             say yes to every y/n prompt
 
 querying:
-  queries are passed onto spotdl, and thus must be any one of the following:
+  queries must be any one of the following:
     1. text
       "<query>"
       e.g. "thundercat - them changes"
@@ -76,7 +88,10 @@ querying:
       e.g. "https://open.spotify.com/track/..."
     3. youtube source + spotify metadata
       "<youtube url>|<spotify url>"
-      e.g. "https://www.youtube.com/watch?v=...|https://open.spotify.com/track/..."
+      e.g. "https://youtube.com/watch?v=...|https://open.spotify.com/track/..."
+    4. a path
+      "<path>"
+      e.g. "06 VERTIGO.flac"
 
 argument defaults:
   -f, --ffargs:
@@ -110,8 +125,8 @@ formatting:
         1. pymtheg placeholders can only be used with `-tf, --timestamp-format`
         2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
            digits and will be right adjusted with 0s if needed, unless they are
-           the first shown unit where they may have up to two characters. hours
-           can be represented by any number of characters.
+           the first shown unit where they _may_ have up to two characters.
+           hours can be represented by any number of characters.
            e.g. "138:02:09", "1:59:08", "2:05", "6"
 
 examples:

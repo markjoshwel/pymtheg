@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.5.0
+
+Fixed random timestamp bug + quality of use updates
+
+- grouped command line options into "clip", "output", "tool" and "pymtheg"
+- fixed bug where if -cs and -ce were "*" (random), they may be the same and cause a failure in ffmpeg invocation
+- allow local files to be specified in queries, placeholder cover art to be used if not available
+- add -sm, --save-music and -smd, --save-music-dir to allow downloaded music to be saved
+- use rich for traceback formatting
+- show full invocation for all errors
+- fix random timestamps being misrepresented as "0"
+
 ## 2.4.0
 
 Added a timestamp exclusion argument + minor changes/updates
