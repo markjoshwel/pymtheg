@@ -74,7 +74,7 @@ class Timestamp(NamedTuple):
     relative: bool = False
 
     def __str__(self) -> str:
-        return ("+" if self.relative else "") + str(self.ss)
+        return "*" if self.random else (("+" if self.relative else "") + str(self.ss))
 
 
 class Behaviour(NamedTuple):

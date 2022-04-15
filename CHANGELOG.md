@@ -10,6 +10,7 @@ Fixed random timestamp bug + quality of use updates
 - add -sm, --save-music and -smd, --save-music-dir to allow downloaded music to be saved
 - use rich for traceback formatting
 - show full invocation for all errors
+- fix random timestamps being misrepresented as "0"
 
 ## 2.4.0
 
