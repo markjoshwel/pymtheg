@@ -567,7 +567,7 @@ def parse_timestamps(start: Timestamp, end: Timestamp, duration: int) -> Tuple[i
     ts_end: int
 
     if start.random and end.random:
-        ts_start = randint(0, duration)
+        ts_start = randint(0, duration - 1)
         ts_end = randint(ts_start, duration)
 
     elif start.random:
