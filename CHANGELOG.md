@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.5.0
+
+Quality of use updates
+
+- allow local files to be specified in queries, placeholder cover art to be used if not available
+- add -sm, --save-music and -smd, --save-music-dir to allow downloaded music to be saved
+- use rich for traceback formatting
+- show full invocation for all errors
+
 ## 2.4.0
 
 Added a timestamp exclusion argument + minor changes/updates
