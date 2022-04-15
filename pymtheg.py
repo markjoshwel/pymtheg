@@ -730,7 +730,7 @@ def get_args(console: Console) -> Behaviour:
             "a python script to share songs from Spotify/YouTube as a 15 second clip"
         ),
         epilog=f"""querying:
-  queries are passed onto spotdl, and thus must be any one of the following:
+  queries must be any one of the following:
     1. text
       "<query>"
       e.g. "thundercat - them changes"
@@ -739,7 +739,10 @@ def get_args(console: Console) -> Behaviour:
       e.g. "https://open.spotify.com/track/..."
     3. youtube source + spotify metadata
       "<youtube url>|<spotify url>"
-      e.g. "https://www.youtube.com/watch?v=...|https://open.spotify.com/track/..."
+      e.g. "https://youtube.com/watch?v=...|https://open.spotify.com/track/..."
+    4. a path
+      "<path>"
+      e.g. "06 VERTIGO.flac"
 
 argument defaults:
   -f, --ffargs:
@@ -773,8 +776,8 @@ formatting:
         1. pymtheg placeholders can only be used with `-tf, --timestamp-format`
         2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
            digits and will be right adjusted with 0s if needed, unless they are
-           the first shown unit where they may have up to two characters. hours
-           can be represented by any number of characters.
+           the first shown unit where they _may_ have up to two characters.
+           hours can be represented by any number of characters.
            e.g. "138:02:09", "1:59:08", "2:05", "6"
 
 examples:
@@ -793,87 +796,96 @@ examples:
     )
 
     parser.add_argument("queries", help="song queries (see querying)", nargs="+")
-    parser.add_argument(
-        "-d",
-        "--dir",
-        type=Path,
-        help="directory to output to, formattable (see formatting)",
-        default="",
-    )
-    parser.add_argument(
-        "-o",
-        "--out",
-        type=Path,
-        help=f"output file name format, formattable (see formatting)",
-        default=OUT,
-    )
-    parser.add_argument(
-        "-sm",
-        "--save-music",
-        help="save downloaded music",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "-smd",
-        "--save-music-dir",
-        type=Path,
-        help=f"directory for downloaded music, defaults to -d/--dir",
-        default="",
-    )
-    parser.add_argument(
-        "-nt",
-        "--no-timestamp",
-        help="switch to exclude timestamps from output clip paths",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "-tf",
-        "--timestamp-format",
-        type=str,
-        help="timestamp format, formattable (see formatting)",
-        default=TIMESTAMP_FORMAT,
-    )
-    parser.add_argument(
-        "-e",
-        "--ext",
-        type=str,
-        help=f'file extension, defaults to "mp4"',
-        default="mp4",
-    )
-    parser.add_argument("-sda", "--sdargs", help="args to pass to spotdl", default="")
-    parser.add_argument(
-        "-ffa",
-        "--ffargs",
-        help="args to pass to ffmpeg for clip creation",
-        default=FFARGS,
-    )
-    parser.add_argument(
+
+    cargs = parser.add_argument_group("clip options")
+    oargs = parser.add_argument_group("output options")
+    targs = parser.add_argument_group("tool options")
+    pargs = parser.add_argument_group("pymtheg options")
+
+    cargs.add_argument(
         "-cs",
         "--clip-start",
         help="specify clip start (default 0)",
         type=str,
         default=CLIP_START,
     )
-    parser.add_argument(
+    cargs.add_argument(
         "-ce",
         "--clip-end",
         help="specify clip end (default +15)",
         type=str,
         default=CLIP_END,
     )
-    parser.add_argument(
+    cargs.add_argument(
         "-i", "--image", help="specify custom image", type=Path, default=None
     )
-    parser.add_argument(
+
+    oargs.add_argument(
+        "-d",
+        "--dir",
+        type=Path,
+        help="directory to output to, formattable (see formatting)",
+        default="",
+    )
+    oargs.add_argument(
+        "-o",
+        "--out",
+        type=Path,
+        help=f"output file name format, formattable (see formatting)",
+        default=OUT,
+    )
+    oargs.add_argument(
+        "-sm",
+        "--save-music",
+        help="save downloaded music",
+        action="store_true",
+        default=False,
+    )
+    oargs.add_argument(
+        "-smd",
+        "--save-music-dir",
+        type=Path,
+        help=f"directory for downloaded music, defaults to -d/--dir",
+        default="",
+    )
+    oargs.add_argument(
+        "-nt",
+        "--no-timestamp",
+        help="switch to exclude timestamps from output clip paths",
+        action="store_true",
+        default=False,
+    )
+    oargs.add_argument(
+        "-tf",
+        "--timestamp-format",
+        type=str,
+        help="timestamp format, formattable (see formatting)",
+        default=TIMESTAMP_FORMAT,
+    )
+    oargs.add_argument(
+        "-e",
+        "--ext",
+        type=str,
+        help=f'file extension, defaults to "mp4"',
+        default="mp4",
+    )
+
+    targs.add_argument("-sda", "--sdargs", help="args to pass to spotdl", default="")
+    targs.add_argument(
+        "-ffa",
+        "--ffargs",
+        help="args to pass to ffmpeg for clip creation",
+        default=FFARGS,
+    )
+
+    pargs.add_argument(
         "-ud",
         "--use-defaults",
         help="use --clip-start as clip start and --clip-length as clip end",
         action="store_true",
         default=False,
     )
-    parser.add_argument(
+    pargs.add_argument(
         "-y",
         "--yes",
         help="say yes to every y/n prompt",
