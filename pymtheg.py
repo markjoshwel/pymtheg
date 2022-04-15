@@ -32,6 +32,7 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from tempfile import TemporaryDirectory
 from traceback import print_tb
 from datetime import datetime
+from base64 import b85decode
 from random import randint
 from pathlib import Path
 from shutil import move
@@ -389,19 +390,26 @@ def main() -> None:
             # get album art if needed
             if bev.image is None:  # no custom image was specified
                 with console.status(f"[dim]{info_status}get album art[/]", spinner="arc"):
-                    invocate(
-                        console=console,
-                        name="ffmpeg",
-                        args=[
-                            "-i",
-                            song_path,
-                            "-an",
-                            song_cover_path,
-                        ],
-                        cwd=tmpdir,
-                        errcode=3,
-                        capture_output=True,
-                    )
+                    try:
+                        invocate(
+                            console=console,
+                            name="ffmpeg",
+                            args=[
+                                "-i",
+                                song_path,
+                                "-an",
+                                song_cover_path,
+                            ],
+                            cwd=tmpdir,
+                            errcode=3,
+                            capture_output=True,
+                            raise_illreturn=True,
+                        )
+
+                    except ChildProcessError:
+                        # file has no cover image, so use a placeholder
+                        with open(song_cover_path, "wb") as cv:
+                            cv.write(b85decode(COVER_IMAGE_DATA.replace(b"\n", b"")))
 
             else:
                 song_cover_path = bev.image
@@ -613,6 +621,7 @@ def invocate(
     cwd: Optional[Path] = None,
     errcode: int = -1,
     capture_output: bool = False,
+    raise_illreturn: bool = False,
 ) -> subprocess.CompletedProcess:
     """
     invocates command using subprocess.run
@@ -627,6 +636,8 @@ def invocate(
         exit code for if the process returns non-zero
     capture_output: bool = False,
         maps to subprocess.run(capture_output=); captures stdout and stderr
+    raise_illreturn: bool = False
+        raises a ChildProcessError if the process returns non-zero
     """
 
     invocation: List[Union[str, Path]] = [name]
@@ -644,6 +655,8 @@ def invocate(
         )
 
         if proc.returncode != 0:
+            if raise_illreturn:
+                raise ChildProcessError(proc.returncode)
             if capture_output:
                 if proc.stdout != "":
                     console.print(f"\n{premsg_error} invocation stdout:\n{proc.stdout}")
@@ -904,6 +917,49 @@ examples:
         exit(1)
 
     return bev
+
+
+# before you start panicking, this is simply a base85 encoded image file used when custom
+# files are specified as queries but they do not have album covers
+COVER_IMAGE_DATA = b"""
+iBL{Q4GJ0x0000DNk~Le0006U0006U2nGNE0KNWqd;kCd32;bRa{vGU000000RV(~7jpmr3QS2vK~#9!?cL8Sd}|!Q
+aX-ed!LYP2r4&0QC3gN7Nq)qVjjW{D*(v{ng-FfLQdUxy3Slij2Jw7*d^flIy~db($GJJLSDlT;nR=%5?#y$ZPfY*-
+sInSM000OM06=g600<5MKyUy6f&&0RZ~y>;0{}p9004pm01zAi0D=Pm5F7x2-~a#+8~}je000mi0D#~C00ajBfZzZC
+1P1^hH~;_y2LK>A000CB03bL30KowOAUFU3!2tjW4gdhb0RRXN006-O00<5MKyUy62o3;1Z~y>;0{}p9004pm06=g6
+0D=Pm5F7vif&%~$8~}je000mi0D#~C01zAifZzZC1P1_s-~a#w2LK>A000CB03bL300ajBAUFU3!2tjuH~;{_0RRXN
+006-O00<5M0KowO2o3;1Z~y=Z4gf%K004pm06=g60D=PmKyUy6f&%~$8~^}<0{{>l0D#~C01zAifZzZC5F7x2-~a#w
+2LOQJ000CB03bL300ajBAUFU31P1^hH~;{_0RSL4006-O00<5M0KowO2o3-M!2tjW4gf%K000OM06=g60D=PmKyUy6
+f&&0RZ~y>;0{{>l004pm01zAifZzZC5F7x2-~a#+8~}je000CB0D#~C00ajBAUFU31P1^hH~;_y2LK>A006-O03bL3
+0KowO2o3-M!2tjW4gdhb0RRXN06=g600<5MKyUy62o3;1Z~y>;0{}p9004pm01zAi0D=Pm5F7vif&%~$8~}je000mi
+0D#~C00ajBfZzZC1P1_s-~a#w2LK>A000CB03bL30KowOAUFU3!2tjuH~;{_0RRXN006-O00<5MKyUy62o3;1Z~y=Z
+4gf%K004pm06=g60D=Pm5F7vif&%~$8~^}<0{{>l0D#~C01zAifZzZC1P1_s-~a#w2LOQJ000CB03bL300ajBAUFU3
+!2tjuH~;{_0RSL4006-O00<5M0KowO2o3;1Z~y=Z4gf%K000OM06=g60D=PmKyUy6f&%~$8~^}<0{{>l004pm01zAi
+fZzZC5F7x2-~a#w2LOQJ000CB0D#~C00ajBAUFU31P1^hH~;{_0RSL4006-O03bL30KowO2o3-M!2tjW4gf%K000OM
+06=g600<5MKyUy6f&&0RZ~y>;1Nce*IBIIDdI5q1KyUzp1E{{*+FHQ@2o6AS0D=P$9D)M`2Y}!J1P73?y1F{S0SFF2
+Z~%e>5FCO71P6fN00ak+u=@IX!2t*kKyUzp0}vd70|W<v-~a>%kg!Z9BRBxT0SFF2Z~#9%H~<6(AUFWQ0sQ|pG&Bef
+KyUzp0}vd5-~a>%fZzZG2avGF#zw&b2o6AS0D=P$9Dv{e5FCKu00ajhIDnt7si{eD0D=P$9Dv{e1P35E00ajhIDmvT
+H#Z9oKyUzp0}vd5-~a>%fZzZG2avFqmKMPQ2o6AS0D=P$9Dv{e5FCKu01}qXW(5ZzIDqmzKR<^;p%7+gXT#XoSm^8P
+3%Oh_)YsRCo}QjCJUkrc=jX%r_I4;1i-H3X96<SQZf?TN%*=aSlnRHxUY(ttVQy|NTwPrW4nS}KAB#^ZmY0`9TU%S%
+q4D=Cp21O9S0^|C!2$f~`uaMIj*eCw8eh2p1P7$h@$qr!?(Y7U*bp3m;DD4q*~sVf-xeE!0}vdLGI7tw$jHdI#)jYk
+1P7$d($dnm$A;hl1P7!@{3)fiwY983i05ytudj!blap|JdmHZV?!xKmY1r7<2m=EHf&&m7z(1Rsn));hGMP+RTU!e+
+FE1b7=k@h9Y;JCTI+9*+0D=Qj=IQAvbaZr-jDmQY=+4eg+4np+I4C<h00al5!2bUJr%|xFy87k&Zf$J|4nS}KzfDh1
+mkfg5-rn~)Dqr>X_7;YQh6D#7IDqgzh^<r*tgNh5eDAoQLvR3s0|@>7{Uw9o@bIwWd!L=12@XJT03o!ux0eipI4!nP
+@r@S4+W^4<BpMv?vjGGLq(G8Csl-FX00al5K$4qA<7Wd14oHC{UyF?=oB{|ANP#2|{@UBy^92Bc1JWR=qs`-n(PFXa
+3jhQMq(u_L+a@L^EIc4MAWgn|JbgBs4VRaf79J2BkTy$8OJ$Fg|F_rT;-Uoy1P7#1+)ptwGE()}h;ObuJUm!%KyW}>
+#h+I4`Fz!4qpPbcTwGjOXh3j4+8rMshwkp~s>H_8(UAoP1PAb2e9|#GI{Kf*#^B(fCmVp^0R9yBbSy6~hqku1ibEs5
+9=oux5bp2qEhr#3fRDv#u`@F>A(zXQ9UAc!+wt-7aDIMn0Rh1QlrPRxDHIA}c6RoC=vq9FBSuJ!i#Ts3{%vw{GVJc|
+hR4T83kC=d06=g60D=PmKyUy6f&&0RZ~y>;0{{>l004pm01zAifZzZC5F7x2-~a#+8~}je000CB0D#~C00ajBAUFU3
+1P1^hH~;_y2LK>A006-O03bL30KowO2o6gC00<5MKyUy62o3;1Z~y>;0{}p9004pm06=g60D=Pm5F7vif&%~$8~}je
+000mi0D#~C01zAifZzZC1P1_s-~a#w2LK>A000CB03bL300ajBAUFU3!2tjuH~;{_0RRXN006-O00<5M0KowO2o3;1
+Z~y=Z4gf%K004pm06=g60D=PmKyUy6f&%~$8~^}<0{{>l0D#~C01zAifZzZC5F7x2-~a#w2LOQJ000CB03bL300ajB
+AUFU31P1^hH~;{_0RSL4006-O00<5M0KowO2o3-M!2tjW4gf%K000OM06=g60D=PmKyUy6f&&0RZ~y>;0{{>l004pm
+01zAifZzZC5F7x2-~a#+8~}je000CB0D#~C00ajBAUFU31P1^hH~;_y2LK>A006-O03bL30KowO2o3-M!2tjW4gdhb
+0RRXN06=g600<5MKyUy6f&&0RZ~y>;0{}p9004pm01zAi0D=Pm5F7x2-~a#+8~}je000mi0D#~C00ajBfZzZC1P1^h
+H~;_y2LK>A000CB03bL30KowOAUFU3!2tjW4gdhb0RRXN006-O00<5MKyUy62o3;1Z~y=Z4gf%K004pm06=g60D=Pm
+5F7vif&%~$8~^}<0{{>l0D#~C01zAifZzZC1P1_s-~a#w2LOQJ000CB03bL300ajBAUFU3!2tjuH~;{_0RSL4006-O
+00<5M0KowO2o3;1Z~y=Z4gf%K000OM06=g60D=PmKyUy6f&%~$8~^}<0{{>l004pm01zAifZzZC5F7x2-~a#w2LOQJ
+000CB0D#~C00ajBAUFU31P1^hH~;{_0RSL4006-O03bL30KowO2o3-M!2tjW4gf%K000OM06=g600<5MKyUy6f&&0R
+Z~y>;0{{>l004pm01zAi0D=Pm5F7x2-~a%qz%RDyFKU20J8A#`002ovPDHLkV1f"""
 
 
 if __name__ == "__main__":
