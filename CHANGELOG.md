@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.5.1
+
+Fix timestamp bugs + implement end-relative timestamps + quality of use updates
+
+- theoretically fixed the `-cs "*" -ce "*"` bug
+- 0 timestamps would show empty during confirmations
+- invalidate -1 as a start timestamp
+- new end-relative timestamp parsing, e.g. -15
+- not show error message if all songs were skipped
+
 ## 2.5.0
 
 Fixed random timestamp bug + quality of use updates

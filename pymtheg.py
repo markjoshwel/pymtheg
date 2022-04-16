@@ -146,15 +146,19 @@ def main() -> None:
         )
 
     else:
+        error = False
         if stdout != "":
             console.print(f"\n{premsg_error} invocation stdout:\n{stdout}")
+            error = True
         if stderr != "":
             console.print(f"\n{premsg_error} invocation stderr:\n{stderr}")
+            error = True
 
-        console.print(
-            f"{premsg_error} invalid link/query, nothing to do. (see above for more information)"
-        )
-        exit(1)
+        if error:
+            console.print(
+                f"{premsg_error} invalid link/query, nothing to do. (see above for more information)"
+            )
+            exit(1)
 
 
 def pymtheg(
@@ -200,8 +204,13 @@ def pymtheg(
 
         else:
             console.print(f"{premsg_info} enter timestamps in format \[hh:mm:]ss")
-            console.print('               timestamp can be "*" for random')
-            console.print('               end timestamp can be relative, prefix with "+"')
+            console.print('               timestamps can be "*" for random')
+            console.print(
+                '               timestamps can be end-relative, prefix with "-"'
+            )
+            console.print(
+                '               end timestamp can be start-relative, prefix with "+"'
+            )
             console.print(
                 f"               press enter to use given defaults "
                 f'("{bev.clip_start}", "{bev.clip_end}")\n'
@@ -257,12 +266,6 @@ def pymtheg(
     start_timestamp, end_timestamp = parse_timestamps(
         bev.clip_start, bev.clip_end, duration=song_duration
     )
-
-    if bev.clip_end.relative:
-        end_timestamp += start_timestamp
-
-    if end_timestamp == -1:
-        end_timestamp = song_duration
 
     if not bev.use_defaults:
         # timestamp prompt
@@ -515,8 +518,14 @@ def check_timestamp(type: Union[Literal[0], Literal[1]], ts: str) -> Optional[Ti
     if ts == "*":
         return Timestamp(type=type, ss=0, random=True)
 
-    elif ts == "-1":
-        return Timestamp(type=type, ss=-1)
+    elif ts.startswith("-"):
+        if type == 0:
+            return None
+        ts = ts[1:]
+        if ts.isnumeric():
+            return Timestamp(type=type, ss=-(int(ts)))
+        else:
+            return None
 
     else:
         relative: bool
@@ -568,7 +577,7 @@ def parse_timestamps(start: Timestamp, end: Timestamp, duration: int) -> Tuple[i
 
     if start.random and end.random:
         ts_start = randint(0, duration - 1)
-        ts_end = randint(ts_start, duration)
+        ts_end = randint(ts_start + 1, duration)
 
     elif start.random:
         ensure_random = end.ss if end.relative else 0
@@ -583,11 +592,17 @@ def parse_timestamps(start: Timestamp, end: Timestamp, duration: int) -> Tuple[i
         ts_start = start.ss
         ts_end = (start.ss + end.ss) if end.relative else end.ss
 
+    if ts_end < 0:
+        ts_end = duration - abs(ts_end) + 1
+
     return (ts_start, ts_end)
 
 
 def to_timestamp(ts: int) -> str:
     """returns a [(h*):mm:]ss timestamp string from `ts: int`"""
+    if ts == 0:
+        return "0"
+
     _mm = ts // 60
     hh = _mm // 60
     mm = _mm - hh * 60
