@@ -5,7 +5,6 @@ use with Termux.
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [Contributing](#contributing)
 - [License](#license)
 
 See [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
