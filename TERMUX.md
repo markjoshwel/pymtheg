@@ -2,12 +2,12 @@
 
 ## Prerequisites
 
-- Termux  
+- Termux
   Links:
   [F-Droid](https://f-droid.org/packages/com.termux),
   [Google Play](https://play.google.com/store/apps/details?id=com.termux)
 
-- Termux:API  
+- Termux:API
   Links:
   [F-Droid](https://f-droid.org/packages/com.termux.api),
   [Google Play](https://play.google.com/store/apps/details?id=com.termux.api)
@@ -45,9 +45,6 @@ curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-s
    ```
 
 2. Install pymtheg
-
-   Currently, only a certain version of rapidfuzz can be built on Android.
-   ([maxbachmann/RapidFuzz#195](https://github.com/maxbachmann/RapidFuzz/issues/195))
 
    This will take some time to build, so hold the wakelock and enjoy a cup.
 
