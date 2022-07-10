@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.0
+
+Dependency bump + documentation updates
+
 ## 2.5.1
 
 Fix timestamp bugs + implement end-relative timestamps + quality of use updates

@@ -5,7 +5,7 @@ use with Termux.
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [License](#license)
+- [Licence](#licence)
 
 See [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
 
@@ -16,13 +16,15 @@ See [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
 pymtheg requires [Python 3.6.3](https://python.org/) or later, and
 [ffmpeg](https://ffmpeg.org/).
 
-### From pip
+### From PyPi
 
 ```text
 pip install pymtheg
 ```
 
-### From main
+It is recommended to install pymtheg using [pipx](https://github.com/pypa/pipx).
+
+### From source
 
 ```text
 git clone https://github.com/markjoshwel/pymtheg.git
@@ -119,7 +121,7 @@ formatting:
       {cer}
         clip end relative to clip start, prefixed with +
         e.g. +15
-    
+
       notes:
         1. pymtheg placeholders can only be used with `-tf, --timestamp-format`
         2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
@@ -136,7 +138,7 @@ examples:
   3. get multiple songs through multiple queries
     pymtheg "https://open.spotify.com/track/..." "<query 2>"
   4. get a random 15s clip of a song
-    pymtheg "<query>" -cs "*" -ce "+15" -ud 
+    pymtheg "<query>" -cs "*" -ce "+15" -ud
 
   note: see querying for more information on queries
 ```
@@ -148,8 +150,8 @@ examples:
 - `2`: Error during song retrieval
 - `3`: Error during video creation
 
-## License
+## Licence
 
-pymtheg is unlicensed with The Unlicense. In short, do whatever. You can find copies of
+pymtheg is unlicenced with The Unlicense. In short, do whatever. You can find copies of
 the license in the [UNLICENSE](UNLICENSE) file or in the
 [pymtheg module docstring](pymtheg.py).
