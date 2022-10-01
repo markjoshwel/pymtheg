@@ -13,7 +13,7 @@ See [TERMUX.md](TERMUX.md) for more information on pymtheg on Termux.
 
 ## Installation
 
-pymtheg requires [Python 3.6.3](https://python.org/) or later, and
+pymtheg requires [Python 3.7](https://python.org/) or later, and
 [ffmpeg](https://ffmpeg.org/).
 
 ### From PyPi

@@ -1,11 +1,8 @@
 """
 pymtheg: A Python script to share songs from Spotify/YouTube as a 15 second clip
-
 --------------------------------------------------------------------------------
 
 This is free and unencumbered software released into the public domain.
-
------------------------------------------------------------------------
 
 Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software,
 either in source code form or as a compiled binary, for any purpose, commercial or
@@ -786,7 +783,7 @@ formatting:
       {{cer}}
         clip end relative to clip start, prefixed with +
         e.g. +15
-    
+
       notes:
         1. pymtheg placeholders can only be used with `-tf, --timestamp-format`
         2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
@@ -803,7 +800,7 @@ examples:
   3. get multiple songs through multiple queries
     pymtheg "https://open.spotify.com/track/..." "<query 2>"
   4. get a random 15s clip of a song
-    pymtheg "<query>" -cs "*" -ce "+15" -ud 
+    pymtheg "<query>" -cs "*" -ce "+15" -ud
 
   note: see querying for more information on queries
 """,

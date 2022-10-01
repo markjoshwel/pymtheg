@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pymtheg"
-version = "2.6.0"
+version = "2.7.0"
 description = "A Python script to share songs from Spotify/YouTube as a 15 second clip."
 authors = ["Your Name <you@example.com>"]
 packages = [
@@ -29,9 +29,10 @@ line-length = 90
 pymtheg = 'pymtheg:main'
 
 [tool.poetry.dependencies]
-python = "^3.6.3"
+python = "^3.7.0"
 spotdl = "^3.9.4"
 rich = "^12.2.0"
+websockets = "10.0"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.931"
