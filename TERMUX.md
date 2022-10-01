@@ -49,10 +49,6 @@ curl https://raw.githubusercontent.com/markjoshwel/pymtheg/main/termux-pymtheg-s
    This will take some time to build, so hold the wakelock and enjoy a cup.
 
    ```text
-   pip install rapidfuzz==1.91
-   ```
-
-   ```text
    pip install pymtheg
    ```
 
