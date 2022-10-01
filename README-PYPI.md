@@ -10,7 +10,7 @@ contribution instructions/information.
 
 ## Installation
 
-pymtheg requires [Python 3.6.3](https://python.org/) or later,
+pymtheg requires [Python 3.7](https://python.org/) or later,
 and [ffmpeg](https://ffmpeg.org/).
 
 ## Usage
@@ -101,7 +101,7 @@ formatting:
       {cer}
         clip end relative to clip start, prefixed with +
         e.g. +15
-    
+
       notes:
         1. pymtheg placeholders can only be used with `-tf, --timestamp-format`
         2. "[(h*)mm]ss": seconds and minutes will always be represented as 2
@@ -118,7 +118,7 @@ examples:
   3. get multiple songs through multiple queries
     pymtheg "https://open.spotify.com/track/..." "<query 2>"
   4. get a random 15s clip of a song
-    pymtheg "<query>" -cs "*" -ce "+15" -ud 
+    pymtheg "<query>" -cs "*" -ce "+15" -ud
 
   note: see querying for more information on queries
 ```

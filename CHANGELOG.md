@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.7.0
+
+- Minimum version is now Python 3.7
+- Security issue-resolving dependency bump
+- Termux README documentation update
+
 ## 2.6.0
 
 Dependency bump + documentation updates
