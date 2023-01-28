@@ -1,5 +1,16 @@
 # pymtheg
 
+| This project has been archived. |
+| ---- |
+
+As pymtheg is a script that merely invocates the command line, anybody wishing to
+maintain it should (relatively and hopefully) be able to do it with ease. If so,
+change the lines calling the `invocate()` function as needed.
+
+Android users may consider [Seal](https://github.com/JunkFood02/Seal) instead.
+
+----
+
 A Python script to share songs from Spotify/YouTube as a 15 second clip. Designed for
 use with Termux.
 
